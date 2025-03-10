@@ -1,4 +1,4 @@
-schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v0.2.0/config_schema.json
+schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.0/config_schema.json
 targets:
 - target_id: wk inc flu hosp
   metrics:
@@ -7,4 +7,5 @@ targets:
   - location
 eval_sets:
 - eval_set_name: Full season
-  min_round_id: '2023-01-21'
+  round_filters:
+    min: '2023-01-21'

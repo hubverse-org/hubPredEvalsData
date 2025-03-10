@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v0.2.0/config_schema.json",
+    "$id": "https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.0/config_schema.json",
     "title": "hubPredEvalsData options",
     "description": "hubPredEvalsData configuration object schema",
     "type": "object",
@@ -9,7 +9,7 @@
         "schema_version": {
             "description": "URL to a version of the hubPredEvalsData config_schema.json file. Used to declare the schema version a 'predevals-config.yml' file is compatible with. The URL provided should be the URL to the raw content of the schema file on GitHub.",
             "examples": [
-                "https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v0.2.0/config_schema.json"
+                "https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.0/config_schema.json"
             ],
             "type": "string",
             "format": "uri"
@@ -72,27 +72,46 @@
                 "type": "object",
                 "properties": {
                     "eval_set_name": {
-                        "description": "A name for the evaluation window",
+                        "description": "A name for the evaluation set",
                         "type": "string",
                         "minLength": 1
                     },
-                    "min_round_id": {
-                        "description": "Minimum round id to include in the evaluation window, optional. Prior round_ids will be excluded from the evaluation.",
-                        "type": "string"
+                    "round_filters": {
+                        "description": "Optional object specifying filters on the modeling round id.",
+                        "type": "object",
+                        "properties": {
+                            "min": {
+                                "description": "Minimum round to include in the evaluation set, optional. Prior rounds will be excluded from the evaluation. The order of rounds is taken from the hub's tasks.json config file.",
+                                "type": "string"
+                            },
+                            "n_last": {
+                                "description": "Number of trailing rounds to include in the evaluation set, optional. The last n rounds with any available model output will be included in the evaluation. The order of rounds is taken from the hub's tasks.json config file.",
+                                "type": "integer",
+                                "minimum": 1
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": []
                     },
-                    "n_last_round_ids": {
-                        "description": "Number of trailing round ids to include in the evaluation window, optional.",
-                        "type": "integer",
-                        "minimum": 1
+                    "task_filters": {
+                        "description": "Optional object specifying filters on task id variables. The property name is the name of a task id variable and the property value is an array of values for that task id variable to include in the evaluation set.",
+                        "type": "object",
+                        "examples": [
+                            {
+                                "location": ["US", "CA"],
+                                "horizon": [1, 2, 3, 4]
+                            }
+                        ],
+                        "additionalProperties": {
+                            "type": ["string", "array"],
+                            "items": {
+                                "type": "string"
+                            },
+                            "minItems": 1
+                        }
                     }
                 },
-                "additionalProperties": {
-                    "type": ["string", "array"],
-                    "items": {
-                        "type": "string"
-                    },
-                    "minItems": 1
-                },
+                "additionalProperties": false,
                 "required": [
                     "eval_set_name"
                 ]

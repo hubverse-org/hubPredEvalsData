@@ -242,7 +242,7 @@ test_that(
         test_path("testdata", "test_configs",
                   "config_invalid_set_n_last.yaml")
       ),
-      regexp = "/eval_sets/1/n_last_round_ids must be >= 1"
+      regexp = "/eval_sets/1/round_filters/n_last must be >= 1"
     )
   }
 )

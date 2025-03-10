@@ -1,4 +1,4 @@
-schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v0.2.0/config_schema.json
+schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.0/config_schema.json
 targets:
 - target_id: wk inc flu hosp
   metrics:
@@ -22,10 +22,12 @@ targets:
   - target_end_date
 eval_sets:
 - eval_set_name: Full season
-  min_round_id: THIS IS NOT A ROUND ID
+  round_filters:
+    min: THIS IS NOT A ROUND ID
 - eval_set_name: Last 4 weeks
-  min_round_id: '2024-11-30'
-  n_last_round_ids: 4
+  round_filters:
+    min: '2024-11-30'
+    n_last: 4
 task_id_text:
   location:
     US: United States

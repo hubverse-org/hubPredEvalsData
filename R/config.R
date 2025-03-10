@@ -148,7 +148,7 @@ validate_config_vs_hub_tasks <- function(hub_path, predevals_config) {
   validate_config_targets(predevals_config, task_groups, task_id_names)
 
   # checks for eval_sets
-  validate_config_eval_sets(predevals_config, hub_tasks_config)
+  validate_config_eval_sets(predevals_config, hub_tasks_config, task_groups, task_id_names)
 
   # checks for task_id_text
   validate_config_task_id_text(predevals_config, task_groups, task_id_names)
@@ -244,25 +244,65 @@ validate_config_targets <- function(predevals_config, task_groups, task_id_names
 
 
 #' Validate the eval_sets in a predevals config object
-#'  - check that min_round_id specified in predevals config is a valid round_id
+#'  - check that min specified in predevals config is a valid round_id
 #'    for the hub
+#'  - check that any entries in task_filters are valid task id variables
+#'  - check that for each task id variable in task_filters, specified values are valid values
+#'    for that task id as specified in the hub's config
 #'
 #' @noRd
-validate_config_eval_sets <- function(predevals_config, hub_tasks_config) {
+#' TODO unit tests for new validation checks here
+validate_config_eval_sets <- function(predevals_config, hub_tasks_config, task_groups, task_id_names) {
   hub_round_ids <- hubUtils::get_round_ids(hub_tasks_config)
   for (eval_set in predevals_config$eval_sets) {
-    # check that min_round_id is a valid round_id
-    # only do this check if eval_set$min_round_id is specified
-    if (!"min_round_id" %in% names(eval_set)) {
-      next
-    }
-    if (!eval_set$min_round_id %in% hub_round_ids) {
+    # check that min is a valid round_id
+    # only do this check if eval_set$min is specified
+    round_filters <- eval_set$round_filters
+    if ("min" %in% names(round_filters) && !round_filters$min %in% hub_round_ids) {
       raise_config_error(
         cli::format_inline(
-          "Minimum round id {.val {eval_set$min_round_id}} for evaluation ",
+          "Minimum round id {.val {round_filters$min}} for evaluation ",
           "set is not a valid round id for the hub."
         )
       )
+    }
+
+    # check that any entries in task_filters are valid task id variables
+    task_filters <- eval_set$task_filters
+    extra_set_filter_names <- setdiff(
+      names(task_filters),
+      task_id_names
+    )
+    if (length(extra_set_filter_names) > 0) {
+      raise_config_error(
+        cli::format_inline(
+          "Specified task filters based on task id variable{?s} {.val {extra_set_filter_names}} ",
+          "that {?is/are} not found in the hub task id variables."
+        )
+      )
+    }
+
+    # check that for any task id variables, specified values are valid values
+    # for that task id as specified in the hub's config
+    task_ids_filtered_on <- intersect(names(task_filters), task_id_names)
+    error_messages <- purrr::map(
+      task_ids_filtered_on,
+      function(task_id_name) {
+        extra_set_filter_values <- setdiff(task_filters[[task_id_name]], get_task_id_values(task_groups, task_id_name))
+        if (length(extra_set_filter_values) == 0) {
+          NULL
+        } else {
+          cli::format_inline(
+            "Evaluation set specified invalid filter values on task id variable {.val {task_id_name}}: ",
+            "{.val {extra_set_filter_values}}"
+          )
+        }
+      }
+    ) |>
+      unlist()
+
+    if (length(error_messages) > 0) {
+      raise_config_error(error_messages)
     }
   }
 }
@@ -292,14 +332,7 @@ validate_config_task_id_text <- function(predevals_config, task_groups, task_id_
   for (i in seq_along(predevals_config$task_id_text)) {
     task_id_text_item <- predevals_config$task_id_text[[i]]
     task_id_name <- names(predevals_config$task_id_text)[i]
-    hub_task_id_values <- purrr::map(
-      task_groups,
-      function(task_group) {
-        task_group$task_ids[[task_id_name]]
-      }
-    ) |>
-      unlist() |>
-      unique()
+    hub_task_id_values <- get_task_id_values(task_groups, task_id_name)
 
     missing_task_id_text_values <- setdiff(
       hub_task_id_values,

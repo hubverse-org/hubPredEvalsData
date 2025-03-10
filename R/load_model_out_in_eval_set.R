@@ -24,27 +24,39 @@ load_model_out_in_eval_set <- function(hub_path, target_id, eval_set) {
   conn <- conn |>
     dplyr::filter(!!rlang::sym(target_task_id_var_name) == target_task_id_value)
 
+  # filter based on task id variables
+  if ("task_filters" %in% names(eval_set)) {
+    task_filters <- eval_set$task_filters
+    for (task_id_var_name in names(task_filters)) {
+      task_id_values <- task_filters[[task_id_var_name]]
+      conn <- conn |>
+        dplyr::filter(!!rlang::sym(task_id_var_name) %in% task_id_values)
+    }
+  }
+
   # if eval_set doesn't specify any subsetting by rounds, return the full data
-  no_limits <- identical(names(eval_set), "eval_set_name")
+  no_limits <- !("round_filters" %in% names(eval_set))
   if (no_limits) {
     return(conn |> dplyr::collect())
   }
 
+  round_filters <- eval_set$round_filters
+
   # if eval_set specifies a minimum round id, filter to that
   round_id_var_name <- hub_tasks_config[["rounds"]][[1]][["round_id"]]
-  if ("min_round_id" %in% names(eval_set)) {
+  if ("min" %in% names(round_filters)) {
     conn <- conn |>
-      dplyr::filter(!!rlang::sym(round_id_var_name) >= eval_set$min_round_id)
+      dplyr::filter(!!rlang::sym(round_id_var_name) >= round_filters$min)
   }
 
   # load the data
   model_out_tbl <- conn |> dplyr::collect()
 
-  if ("n_last_round_ids" %in% names(eval_set)) {
+  if ("n_last" %in% names(round_filters)) {
     # filter to the last n rounds
     max_present_round_id <- max(model_out_tbl[[round_id_var_name]])
     round_ids <- round_ids[round_ids <= max_present_round_id]
-    round_ids <- utils::tail(round_ids, eval_set$n_last_round_ids)
+    round_ids <- utils::tail(round_ids, round_filters$n_last)
     model_out_tbl <- model_out_tbl |>
       dplyr::filter(!!rlang::sym(round_id_var_name) %in% round_ids)
   }
