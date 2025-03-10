@@ -38,8 +38,6 @@ filter_task_groups_to_target <- function(task_groups, target_id) {
 }
 
 
-# TODO unit test get_task_id_values
-
 #' get a vector of all optional and required values for a given task id variable,
 #' collected across all task groups
 #'

@@ -193,3 +193,41 @@ test_that(
     )
   }
 )
+
+
+
+test_that(
+  "load_model_out_in_eval_set succeeds, min round and task id filters",
+  {
+    model_out_tbl <- load_model_out_in_eval_set(
+      hub_path = test_path("testdata", "ecfh"),
+      target_id = "wk flu hosp rate category",
+      eval_set = list(
+        eval_set_name = "some subset",
+        round_filters = list(
+          min = "2022-11-19"
+        ),
+        task_filters = list(
+          location = "US",
+          horizon = c(1, 2)
+        )
+      )
+    )
+
+    expected_model_out_tbl <- hubData::connect_hub(
+      test_path("testdata", "ecfh")
+    ) |>
+      dplyr::filter(
+        target == "wk flu hosp rate category",
+        reference_date >= "2022-11-19",
+        location == "US",
+        horizon %in% c(1, 2)
+      ) |>
+      dplyr::collect()
+
+    expect_df_equal_up_to_order(
+      model_out_tbl,
+      expected_model_out_tbl
+    )
+  }
+)
