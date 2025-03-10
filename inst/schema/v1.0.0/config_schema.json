@@ -103,9 +103,9 @@
                             }
                         ],
                         "additionalProperties": {
-                            "type": ["string", "array"],
+                            "type": ["integer", "string", "array"],
                             "items": {
-                                "type": "string"
+                                "type": ["integer", "string"]
                             },
                             "minItems": 1
                         }
