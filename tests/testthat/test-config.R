@@ -263,6 +263,36 @@ test_that(
 )
 
 test_that(
+  "read_predevals_config fails, invalid eval set task filter variable name",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    expect_error(
+      read_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_invalid_set_filter_task_name.yaml")
+      ),
+      regexp = 'Specified task filters based on task id variable "not_a_real_task_id" that is not found in the hub'
+    )
+  }
+)
+
+test_that(
+  "read_predevals_config fails, invalid eval set task filter variable value",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    expect_error(
+      read_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_invalid_set_filter_task_value.yaml")
+      ),
+      regexp = 'Evaluation set specified invalid filter values on task id variable "location": "not a real location"'
+    )
+  }
+)
+
+test_that(
   "read_predevals_config fails, invalid task_id_text, not a task id variable",
   {
     hub_path <- test_path("testdata", "ecfh")
