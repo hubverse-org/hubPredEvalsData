@@ -70,7 +70,7 @@ test_that(
 )
 
 test_that(
-  "generate_eval_data generates a warning and partial results if an evaluation set has no data",
+  "generate_eval_data generates an informative message and partial results if an evaluation set has no data",
   {
     out_path <- withr::local_tempdir()
     hub_path <- test_path("testdata", "ecfh")
