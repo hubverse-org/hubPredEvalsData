@@ -251,7 +251,6 @@ validate_config_targets <- function(predevals_config, task_groups, task_id_names
 #'    for that task id as specified in the hub's config
 #'
 #' @noRd
-#' TODO unit tests for new validation checks here
 validate_config_eval_sets <- function(predevals_config, hub_tasks_config, task_groups, task_id_names) {
   hub_round_ids <- hubUtils::get_round_ids(hub_tasks_config)
   for (eval_set in predevals_config$eval_sets) {
