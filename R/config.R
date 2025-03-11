@@ -115,6 +115,23 @@ load_schema_json <- function(config) {
     )
   }
 
+  minimum_version <- "v1.0.0"
+  if (schema_version < minimum_version) {
+    raise_config_error(
+      c(
+        cli::format_inline(
+          "The predevals schema version is too old. Please update to the latest schema version."
+        ),
+        "x" = cli::format_inline(
+          "Specified version: {.val {schema_version}}."
+        ),
+        "i" = cli::format_inline(
+          "Minimum version: {.val {minimum_version}}"
+        )
+      )
+    )
+  }
+
   schema_path <- system.file("schema", schema_version, "config_schema.json",
                              package = "hubPredEvalsData")
 

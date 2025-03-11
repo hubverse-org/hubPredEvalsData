@@ -157,7 +157,7 @@ test_that(
 )
 
 test_that(
-  "read_predevals_config fails, well-formatted but unsupported schema_version in yaml file",
+  "read_predevals_config fails, well-formatted but unsupported schema_version in yaml file (version never existed)",
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
@@ -167,6 +167,21 @@ test_that(
                   "config_invalid_nonexist_schema_version.yaml")
       ),
       regexp = "Invalid predevals schema version."
+    )
+  }
+)
+
+test_that(
+  "read_predevals_config fails, well-formatted but unsupported schema_version in yaml file (old version)",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    expect_error(
+      read_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_invalid_old_schema_version.yaml")
+      ),
+      regexp = "The predevals schema version is too old. Please update to the latest schema version."
     )
   }
 )

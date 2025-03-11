@@ -1,0 +1,90 @@
+schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v0.1.0/config_schema.json
+targets:
+- target_id: wk inc flu hosp
+  metrics:
+  - wis
+  - ae_median
+  - interval_coverage_50
+  - interval_coverage_95
+  disaggregate_by:
+  - location
+  - reference_date
+  - horizon
+  - target_end_date
+- target_id: wk flu hosp rate category
+  metrics:
+  - log_score
+  - rps
+  disaggregate_by:
+  - location
+  - reference_date
+  - horizon
+  - target_end_date
+eval_sets:
+- eval_set_name: Full season
+  round_filters:
+    min: '2023-01-21'
+- eval_set_name: Last 4 weeks
+  round_filters:
+    min: '2023-01-21'
+    n_last: 4
+task_id_text:
+  location:
+    US: United States
+    '01': Alabama
+    '02': Alaska
+    '04': Arizona
+    '05': Arkansas
+    '06': California
+    '08': Colorado
+    '09': Connecticut
+    '10': Delaware
+    '11': District of Columbia
+    '12': Florida
+    '13': Georgia
+    '15': Hawaii
+    '16': Idaho
+    '17': Illinois
+    '18': Indiana
+    '19': Iowa
+    '20': Kansas
+    '21': Kentucky
+    '22': Louisiana
+    '23': Maine
+    '24': Maryland
+    '25': Massachusetts
+    '26': Michigan
+    '27': Minnesota
+    '28': Mississippi
+    '29': Missouri
+    '30': Montana
+    '31': Nebraska
+    '32': Nevada
+    '33': New Hampshire
+    '34': New Jersey
+    '35': New Mexico
+    '36': New York
+    '37': North Carolina
+    '38': North Dakota
+    '39': Ohio
+    '40': Oklahoma
+    '41': Oregon
+    '42': Pennsylvania
+    '44': Rhode Island
+    '45': South Carolina
+    '46': South Dakota
+    '47': Tennessee
+    '48': Texas
+    '49': Utah
+    '50': Vermont
+    '51': Virginia
+    '53': Washington
+    '54': West Virginia
+    '55': Wisconsin
+    '56': Wyoming
+    '60': American Samoa
+    '66': Guam
+    '69': Northern Mariana Islands
+    '72': Puerto Rico
+    '74': U.S. Minor Outlying Islands
+    '78': Virgin Islands
