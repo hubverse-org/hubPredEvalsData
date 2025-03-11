@@ -272,7 +272,7 @@ validate_config_eval_sets <- function(predevals_config, hub_tasks_config, task_g
   hub_round_ids <- hubUtils::get_round_ids(hub_tasks_config)
   for (eval_set in predevals_config$eval_sets) {
     # check that min is a valid round_id
-    # only do this check if eval_set$min is specified
+    # only do this check if eval_set$round_filters$min is specified
     round_filters <- eval_set$round_filters
     if ("min" %in% names(round_filters) && !round_filters$min %in% hub_round_ids) {
       raise_config_error(
@@ -300,7 +300,7 @@ validate_config_eval_sets <- function(predevals_config, hub_tasks_config, task_g
 
     # check that for any task id variables, specified values are valid values
     # for that task id as specified in the hub's config
-    task_ids_filtered_on <- intersect(names(task_filters), task_id_names)
+    task_ids_filtered_on <- names(task_filters)
     error_messages <- purrr::map(
       task_ids_filtered_on,
       function(task_id_name) {
