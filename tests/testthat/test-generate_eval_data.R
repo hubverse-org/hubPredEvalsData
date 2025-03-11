@@ -81,7 +81,7 @@ test_that(
     )
     oracle_output[["target_end_date"]] <- as.Date(oracle_output[["target_end_date"]])
 
-    expect_warning(
+    expect_message(
       generate_eval_data(
         hub_path = hub_path,
         config_path = test_path("testdata", "test_configs", "config_valid_set_filters_no_data.yaml"),

@@ -47,7 +47,7 @@ generate_target_eval_data <- function(hub_path,
   for (eval_set in eval_sets) {
     model_out_tbl <- load_model_out_in_eval_set(hub_path, target$target_id, eval_set)
     if (nrow(model_out_tbl) == 0) {
-      cli::cli_warn(
+      cli::cli_inform(
         "No model output data found for target {.val {target_id}}
          in evaluation set {.val {eval_set$eval_set_name}}."
       )
