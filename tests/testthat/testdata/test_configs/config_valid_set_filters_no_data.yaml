@@ -8,12 +8,6 @@ targets:
   - ae_median
   - interval_coverage_50
   - interval_coverage_95
-  relative_metrics:
-  - se_point
-  - ae_point
-  - wis
-  - ae_median
-  baseline: FS-base
   disaggregate_by:
   - location
   - reference_date
@@ -27,11 +21,11 @@ eval_sets:
   round_filters:
     min: '2022-10-22'
     n_last: 5
-- eval_set_name: Alabama, positive horizons
+- eval_set_name: Valid locations with no data in test hub
   round_filters:
     min: '2022-10-22'
   task_filters:
-    location: ["01"]
+    location: ["06", "25"]
     horizon: [1, 2, 3]
 task_id_text:
   location:

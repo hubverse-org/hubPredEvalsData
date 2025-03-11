@@ -21,6 +21,12 @@ eval_sets:
   round_filters:
     min: '2022-10-22'
     n_last: 5
+- eval_set_name: Alabama, positive horizons
+  round_filters:
+    min: '2022-10-22'
+  task_filters:
+    location: ["01"]
+    horizon: [1, 2, 3]
 task_id_text:
   location:
     US: United States

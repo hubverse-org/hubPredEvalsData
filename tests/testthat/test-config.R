@@ -13,6 +13,20 @@ test_that(
 )
 
 test_that(
+  "read_predevals_config succeeds, valid yaml file with task id filters",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    expect_snapshot(
+      read_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_valid_set_filters.yaml")
+      )
+    )
+  }
+)
+
+test_that(
   "read_predevals_config succeeds, valid yaml file with length 1 arrays",
   {
     hub_path <- test_path("testdata", "ecfh")
