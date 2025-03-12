@@ -38,6 +38,24 @@ filter_task_groups_to_target <- function(task_groups, target_id) {
 }
 
 
+#' get a vector of all optional and required values for a given task id variable,
+#' collected across all task groups
+#'
+#' @noRd
+get_task_id_values <- function(task_groups, task_id_name) {
+  task_id_values <- purrr::map(
+    task_groups,
+    function(task_group) {
+      task_group$task_ids[[task_id_name]]
+    }
+  ) |>
+    unlist() |>
+    unique()
+
+  task_id_values
+}
+
+
 #' Get a character vector of all output types across all task groups
 #' @noRd
 get_output_types <- function(task_groups) {

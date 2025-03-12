@@ -39,13 +39,20 @@ generate_target_eval_data <- function(hub_path,
   baseline <- target$baseline
   # adding `NULL` at the beginning will calculate overall scores
   disaggregate_by <- c(list(NULL), as.list(target$disaggregate_by))
-  eval_windows <- config$eval_windows
+  eval_sets <- config$eval_sets
 
   task_groups_w_target <- get_task_groups_w_target(hub_path, target_id)
   metric_name_to_output_type <- get_metric_name_to_output_type(task_groups_w_target, metrics)
 
-  for (eval_window in eval_windows) {
-    model_out_tbl <- load_model_out_in_window(hub_path, target$target_id, eval_window)
+  for (eval_set in eval_sets) {
+    model_out_tbl <- load_model_out_in_eval_set(hub_path, target$target_id, eval_set)
+    if (nrow(model_out_tbl) == 0) {
+      cli::cli_inform(
+        "No model output data found for target {.val {target_id}}
+         in evaluation set {.val {eval_set$eval_set_name}}."
+      )
+      next
+    }
 
     # calculate overall scores followed by scores disaggregated by a task ID variable.
     for (by in disaggregate_by) {
@@ -56,7 +63,7 @@ generate_target_eval_data <- function(hub_path,
         relative_metrics = relative_metrics,
         baseline = baseline,
         target_id = target_id,
-        window_name = eval_window$window_name,
+        eval_set_name = eval_set$eval_set_name,
         by = by,
         out_path = out_path
       )
@@ -65,18 +72,18 @@ generate_target_eval_data <- function(hub_path,
 }
 
 
-#' Get and save scores for a target in a given evaluation window,
+#' Get and save scores for a target in a given evaluation set,
 #' collecting across different output types as necessary.
 #' Scores are saved in .csv files in subdirectorys under out_path with one of
 #' two structures:
 #' - If by is NULL, the scores are saved in
-#' out_path/target_id/window_name/scores.csv
+#' out_path/target_id/eval_set_name/scores.csv
 #' - If by is not NULL, the scores are saved in
-#' out_path/target_id/window_name/by/scores.csv
+#' out_path/target_id/eval_set_name/by/scores.csv
 #' @noRd
 get_and_save_scores <- function(model_out_tbl, oracle_output, metric_name_to_output_type,
                                 relative_metrics, baseline,
-                                target_id, window_name, by,
+                                target_id, eval_set_name, by,
                                 out_path) {
   # Iterate over the output types and calculate scores for each
   scores <- purrr::map(
@@ -88,7 +95,7 @@ get_and_save_scores <- function(model_out_tbl, oracle_output, metric_name_to_out
       relative_metrics = relative_metrics,
       baseline = baseline,
       target_id = target_id,
-      window_name = window_name,
+      eval_set_name = eval_set_name,
       by = by,
       output_type = .x
     )
@@ -108,24 +115,24 @@ get_and_save_scores <- function(model_out_tbl, oracle_output, metric_name_to_out
   scores <- scores |> dplyr::left_join(n_tasks_by_group, by = group_cols)
 
   # Save the scores to a .csv file
-  target_window_by_out_path <- file.path(out_path, target_id, window_name)
+  target_set_by_out_path <- file.path(out_path, target_id, eval_set_name)
   if (!is.null(by)) {
-    target_window_by_out_path <- file.path(target_window_by_out_path, by)
+    target_set_by_out_path <- file.path(target_set_by_out_path, by)
   }
-  if (!dir.exists(target_window_by_out_path)) {
-    dir.create(target_window_by_out_path, recursive = TRUE)
+  if (!dir.exists(target_set_by_out_path)) {
+    dir.create(target_set_by_out_path, recursive = TRUE)
   }
   utils::write.csv(scores,
-                   file = file.path(target_window_by_out_path, "scores.csv"),
+                   file = file.path(target_set_by_out_path, "scores.csv"),
                    row.names = FALSE)
 }
 
 
-#' Get scores for a target in a given evaluation window for a specific output type.
+#' Get scores for a target in a given evaluation set for a specific output type.
 #' @noRd
 get_scores_for_output_type <- function(model_out_tbl, oracle_output, metric_name_to_output_type,
                                        relative_metrics, baseline,
-                                       target_id, window_name, by,
+                                       target_id, eval_set_name, by,
                                        output_type) {
   metrics <- metric_name_to_output_type$metric[
     metric_name_to_output_type$output_type == output_type

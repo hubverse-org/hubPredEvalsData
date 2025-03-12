@@ -1,11 +1,11 @@
 test_that(
-  "load_model_out_in_window succeeds, all rounds",
+  "load_model_out_in_eval_set succeeds, all rounds",
   {
-    model_out_tbl <- load_model_out_in_window(
+    model_out_tbl <- load_model_out_in_eval_set(
       hub_path = test_path("testdata", "ecfh"),
       target_id = "wk flu hosp rate category",
-      eval_window = list(
-        window_name = "all"
+      eval_set = list(
+        eval_set_name = "all"
       )
     )
 
@@ -26,14 +26,16 @@ test_that(
 
 
 test_that(
-  "load_model_out_in_window succeeds, min_round_id only",
+  "load_model_out_in_eval_set succeeds, min only",
   {
-    model_out_tbl <- load_model_out_in_window(
+    model_out_tbl <- load_model_out_in_eval_set(
       hub_path = test_path("testdata", "ecfh"),
       target_id = "wk flu hosp rate category",
-      eval_window = list(
-        window_name = "some subset",
-        min_round_id = "2022-11-19"
+      eval_set = list(
+        eval_set_name = "some subset",
+        round_filters = list(
+          min = "2022-11-19"
+        )
       )
     )
 
@@ -55,15 +57,17 @@ test_that(
 
 
 test_that(
-  "load_model_out_in_window succeeds, n_last_round_ids only",
+  "load_model_out_in_eval_set succeeds, n_last only",
   {
-    # n_last_round_ids = 5: we expect 2022-12-17, 2022-12-24, 2022-12-31, 2023-01-07, 2023-01-14
-    model_out_tbl <- load_model_out_in_window(
+    # n_last = 5: we expect 2022-12-17, 2022-12-24, 2022-12-31, 2023-01-07, 2023-01-14
+    model_out_tbl <- load_model_out_in_eval_set(
       hub_path = test_path("testdata", "ecfh"),
       target_id = "wk flu hosp rate category",
-      eval_window = list(
-        window_name = "some subset",
-        n_last_round_ids = 5
+      eval_set = list(
+        eval_set_name = "some subset",
+        round_filters = list(
+          n_last = 5
+        )
       )
     )
 
@@ -85,14 +89,16 @@ test_that(
       c("2022-12-17", "2023-01-14")
     )
 
-    # n_last_round_ids = 4: we expect 2022-12-24, 2022-12-31, 2023-01-07, 2023-01-14
+    # n_last = 4: we expect 2022-12-24, 2022-12-31, 2023-01-07, 2023-01-14
     # (but note that ecfh has only 2023-01-14 from this set)
-    model_out_tbl <- load_model_out_in_window(
+    model_out_tbl <- load_model_out_in_eval_set(
       hub_path = test_path("testdata", "ecfh"),
       target_id = "wk flu hosp rate category",
-      eval_window = list(
-        window_name = "some subset",
-        n_last_round_ids = 4
+      eval_set = list(
+        eval_set_name = "some subset",
+        round_filters = list(
+          n_last = 4
+        )
       )
     )
 
@@ -118,15 +124,17 @@ test_that(
 
 
 test_that(
-  "load_model_out_in_window succeeds, min_round_id & n_last_round_ids, min_round_id superceeds",
+  "load_model_out_in_eval_set succeeds, min & n_last, min superceeds",
   {
-    model_out_tbl <- load_model_out_in_window(
+    model_out_tbl <- load_model_out_in_eval_set(
       hub_path = test_path("testdata", "ecfh"),
       target_id = "wk flu hosp rate category",
-      eval_window = list(
-        window_name = "some subset",
-        min_round_id = "2023-01-14",
-        n_last_round_ids = 9
+      eval_set = list(
+        eval_set_name = "some subset",
+        round_filters = list(
+          min = "2023-01-14",
+          n_last = 9
+        )
       )
     )
 
@@ -152,15 +160,17 @@ test_that(
 
 
 test_that(
-  "load_model_out_in_window succeeds, min_round_id & n_last_round_ids, n_last_round_ids superceeds",
+  "load_model_out_in_eval_set succeeds, min & n_last, n_last superceeds",
   {
-    model_out_tbl <- load_model_out_in_window(
+    model_out_tbl <- load_model_out_in_eval_set(
       hub_path = test_path("testdata", "ecfh"),
       target_id = "wk flu hosp rate category",
-      eval_window = list(
-        window_name = "some subset",
-        min_round_id = "2022-11-19", # there are 9 rounds on or after this date
-        n_last_round_ids = 5
+      eval_set = list(
+        eval_set_name = "some subset",
+        round_filters = list(
+          min = "2022-11-19", # there are 9 rounds on or after this date
+          n_last = 5
+        )
       )
     )
 
@@ -180,6 +190,44 @@ test_that(
     expect_setequal(
       unique(model_out_tbl$reference_date),
       c("2022-12-17", "2023-01-14")
+    )
+  }
+)
+
+
+
+test_that(
+  "load_model_out_in_eval_set succeeds, min round and task id filters",
+  {
+    model_out_tbl <- load_model_out_in_eval_set(
+      hub_path = test_path("testdata", "ecfh"),
+      target_id = "wk flu hosp rate category",
+      eval_set = list(
+        eval_set_name = "some subset",
+        round_filters = list(
+          min = "2022-11-19"
+        ),
+        task_filters = list(
+          location = "US",
+          horizon = c(1, 2)
+        )
+      )
+    )
+
+    expected_model_out_tbl <- hubData::connect_hub(
+      test_path("testdata", "ecfh")
+    ) |>
+      dplyr::filter(
+        target == "wk flu hosp rate category",
+        reference_date >= "2022-11-19",
+        location == "US",
+        horizon %in% c(1, 2)
+      ) |>
+      dplyr::collect()
+
+    expect_df_equal_up_to_order(
+      model_out_tbl,
+      expected_model_out_tbl
     )
   }
 )

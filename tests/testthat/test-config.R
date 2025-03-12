@@ -13,6 +13,20 @@ test_that(
 )
 
 test_that(
+  "read_predevals_config succeeds, valid yaml file with task id filters",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    expect_snapshot(
+      read_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_valid_set_filters.yaml")
+      )
+    )
+  }
+)
+
+test_that(
   "read_predevals_config succeeds, valid yaml file with length 1 arrays",
   {
     hub_path <- test_path("testdata", "ecfh")
@@ -143,7 +157,7 @@ test_that(
 )
 
 test_that(
-  "read_predevals_config fails, well-formatted but unsupported schema_version in yaml file",
+  "read_predevals_config fails, well-formatted but unsupported schema_version in yaml file (version never existed)",
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
@@ -153,6 +167,21 @@ test_that(
                   "config_invalid_nonexist_schema_version.yaml")
       ),
       regexp = "Invalid predevals schema version."
+    )
+  }
+)
+
+test_that(
+  "read_predevals_config fails, well-formatted but unsupported schema_version in yaml file (old version)",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    expect_error(
+      read_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_invalid_old_schema_version.yaml")
+      ),
+      regexp = "The predevals schema version is too old. Please update to the latest schema version."
     )
   }
 )
@@ -233,31 +262,61 @@ test_that(
 )
 
 test_that(
-  "read_predevals_config fails, invalid eval window n_last",
+  "read_predevals_config fails, invalid eval set n_last",
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
       read_config(
         hub_path,
         test_path("testdata", "test_configs",
-                  "config_invalid_window_n_last.yaml")
+                  "config_invalid_set_n_last.yaml")
       ),
-      regexp = "/eval_windows/1/n_last_round_ids must be >= 1"
+      regexp = "/eval_sets/1/round_filters/n_last must be >= 1"
     )
   }
 )
 
 test_that(
-  "read_predevals_config fails, invalid eval window min_round_id",
+  "read_predevals_config fails, invalid eval set min_round_id",
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
       read_config(
         hub_path,
         test_path("testdata", "test_configs",
-                  "config_invalid_window_min_round_id.yaml")
+                  "config_invalid_set_min_round_id.yaml")
       ),
-      regexp = 'Minimum round id "THIS IS NOT A ROUND ID" for evaluation window is not a valid round id for the hub.'
+      regexp = 'Minimum round id "THIS IS NOT A ROUND ID" for evaluation set is not a valid round id for the hub.'
+    )
+  }
+)
+
+test_that(
+  "read_predevals_config fails, invalid eval set task filter variable name",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    expect_error(
+      read_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_invalid_set_filter_task_name.yaml")
+      ),
+      regexp = 'Specified task filters based on task id variable "not_a_real_task_id" that is not found in the hub'
+    )
+  }
+)
+
+test_that(
+  "read_predevals_config fails, invalid eval set task filter variable value",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    expect_error(
+      read_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_invalid_set_filter_task_value.yaml")
+      ),
+      regexp = 'Evaluation set specified invalid filter values on task id variable "location": "not a real location"'
     )
   }
 )

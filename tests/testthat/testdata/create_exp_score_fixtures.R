@@ -8,7 +8,7 @@ oracle_output <- read.csv(
 )
 oracle_output[["target_end_date"]] <- as.Date(oracle_output[["target_end_date"]])
 
-make_score_fixtures_one_window <- function(window_name, model_out_tbl) {
+make_score_fixtures_one_set <- function(set_name, model_out_tbl) {
   # get number of unique levels for each "non-dependent" task id
   # (i.e., not target end date)
   nondependent_task_ids <- c("location", "reference_date", "horizon")
@@ -84,11 +84,21 @@ make_score_fixtures_one_window <- function(window_name, model_out_tbl) {
       dir.create(save_path, recursive = TRUE)
     }
 
-    file_name <- paste0("scores_", window_name, ifelse(is.null(by), "", paste0("_by_", by)), ".csv")
+    file_name <- paste0("scores_", set_name, ifelse(is.null(by), "", paste0("_by_", by)), ".csv")
     file_name <- gsub(" ", "_", file_name)
     write.csv(expected_scores, file = file.path(save_path, file_name), row.names = FALSE)
   }
 }
 
-make_score_fixtures_one_window("Full season", model_out_tbl)
-make_score_fixtures_one_window("Last 5 weeks", model_out_tbl |> dplyr::filter(reference_date >= "2022-12-17"))
+make_score_fixtures_one_set(
+  "Full season",
+  model_out_tbl
+)
+make_score_fixtures_one_set(
+  "Last 5 weeks",
+  model_out_tbl |> dplyr::filter(reference_date >= "2022-12-17")
+)
+make_score_fixtures_one_set(
+  "Alabama, positive horizons",
+  model_out_tbl |> dplyr::filter(location == "01", horizon %in% c(1L, 2L, 3L))
+)

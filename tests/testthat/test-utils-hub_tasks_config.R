@@ -64,6 +64,37 @@ test_that(
 
 
 test_that(
+  "get_task_id_values works",
+  {
+    task_groups <- list(
+      list(
+        task_ids = list(
+          horizon = list(required = NULL, optional = 1:4),
+          target = list(required = "target_1", optional = c("target_2", "target_3"))
+        )
+      ),
+      list(
+        task_ids = list(
+          horizon = list(required = NULL, optional = 1:4),
+          target = list(required = "target_3", optional = c("target_4", "target_5"))
+        )
+      )
+    )
+
+    expect_equal(
+      get_task_id_values(task_groups, "horizon"),
+      1:4
+    )
+    expect_equal(
+      get_task_id_values(task_groups, "target"),
+      c("target_1", "target_2", "target_3", "target_4", "target_5")
+    )
+  }
+)
+
+
+
+test_that(
   "get_output_types works",
   {
     task_groups <- list(

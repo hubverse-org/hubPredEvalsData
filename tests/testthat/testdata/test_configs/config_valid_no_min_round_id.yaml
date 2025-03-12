@@ -1,4 +1,4 @@
-schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v0.1.0/config_schema.json
+schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.0/config_schema.json
 targets:
 - target_id: wk inc flu hosp
   metrics:
@@ -20,8 +20,8 @@ targets:
   - reference_date
   - horizon
   - target_end_date
-eval_windows:
-- window_name: Full season
+eval_sets:
+- eval_set_name: Full season
 task_id_text:
   location:
     US: United States
