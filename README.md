@@ -16,7 +16,7 @@ coverage](https://codecov.io/gh/hubverse-org/hubPredEvalsData/graph/badge.svg)](
 
 The goal of hubPredEvalsData is to …
 
-This package is part of the [hubverse](https://hubverse.io/en/latest/)
+This package is part of the [hubverse](https://hubverse.io)
 ecosystem, which aims to provide a set of tools for infectious disease
 modeling hubs to share and collaborate on their work.
 
@@ -40,6 +40,6 @@ contributing to this project, you agree to abide by its terms.
 
 Interested in contributing back to the open-source Hubverse project?
 Learn more about how to [get involved in the Hubverse
-Community](https://hubverse.io/en/latest/overview/contribute.html) or
+Community](https://docs.hubverse.io/en/latest/overview/contribute.html) or
 [how to contribute to the hubPredEvalsData
 package](.github/CONTRIBUTING.md).
