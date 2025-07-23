@@ -44,4 +44,4 @@ Please note that the hubPredEvalsData package is released with a [Contributor Co
 ## Contributing
 
 Interested in contributing back to the open-source Hubverse project?
-Learn more about how to [get involved in the Hubverse Community](https://docs.hubverse.io/en/latest/overview/contribute.html) or [how to contribute to the hubPredEvalsData package](.github/CONTRIBUTING.md).
+Learn more about how to [get involved in the Hubverse Community](https://hubverse.io/community/) or [how to contribute to the hubPredEvalsData package](.github/CONTRIBUTING.md).
