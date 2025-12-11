@@ -1,0 +1,141 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.0/config_schema.json",
+    "title": "hubPredEvalsData options",
+    "description": "hubPredEvalsData configuration object schema",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "schema_version": {
+            "description": "URL to a version of the hubPredEvalsData config_schema.json file. Used to declare the schema version a 'predevals-config.yml' file is compatible with. The URL provided should be the URL to the raw content of the schema file on GitHub.",
+            "examples": [
+                "https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.0/config_schema.json"
+            ],
+            "type": "string",
+            "format": "uri"
+        },
+        "targets": {
+            "description": "Targets for which to compute evaluation metrics, as well as a specification of how predictions for each target should be computed.",
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "target_id": {
+                        "description": "The target id, matching a value given in the target_metadata.target_id field in the hub's tasks_config.json file",
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "metrics": {
+                        "description": "Names of metrics to compute for this target.  These should be names of metrics supported by hubEvals::score_model_out.",
+                        "type": ["string", "array"],
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1
+                    },
+                    "relative_metrics": {
+                        "description": "Optional names of metrics for which to compute pairwise relative skill for this target.  These should be a subset of the metrics for the target.",
+                        "type": ["string", "array"],
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 0
+                    },
+                    "baseline": {
+                        "description": "Name of the model to use as a baseline for relative skill metrics for this target. Required if relative_metrics is provided.",
+                        "type": "string",
+                        "minItems": 0
+                    },
+                    "disaggregate_by": {
+                        "description": "Optional list of task id columns to disaggregate by. Aggregated scores for each model will always be computed.",
+                        "type": ["string", "array"],
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": ["target_id", "metrics"],
+                "dependentRequired": {
+                    "relative_metrics": ["baseline"]
+                }
+            }
+        },
+        "eval_sets": {
+            "description": "Specification of sets of prediction tasks to use for score computations. The settings `min_round_id` and `n_last_round_ids` determine which modeling rounds are included. The evaluation set may also contain other properties, where the property name is the name of a task id variable and the property value is an array of values for that task id variable to include in the evaluation set. If multiple criteria are provided, they are combined with 'and' logic, i.e. the evaluation set will include the intersection of the sets of prediction tasks specified by those criteria.",
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "eval_set_name": {
+                        "description": "A name for the evaluation set",
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "round_filters": {
+                        "description": "Optional object specifying filters on the modeling round id.",
+                        "type": "object",
+                        "properties": {
+                            "min": {
+                                "description": "Minimum round to include in the evaluation set, optional. Prior rounds will be excluded from the evaluation. The order of rounds is taken from the hub's tasks.json config file.",
+                                "type": "string"
+                            },
+                            "n_last": {
+                                "description": "Number of trailing rounds to include in the evaluation set, optional. The last n rounds with any available model output will be included in the evaluation. The order of rounds is taken from the hub's tasks.json config file.",
+                                "type": "integer",
+                                "minimum": 1
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": []
+                    },
+                    "task_filters": {
+                        "description": "Optional object specifying filters on task id variables. The property name is the name of a task id variable and the property value is an array of values for that task id variable to include in the evaluation set.",
+                        "type": "object",
+                        "examples": [
+                            {
+                                "location": ["US", "CA"],
+                                "horizon": [1, 2, 3, 4]
+                            }
+                        ],
+                        "additionalProperties": {
+                            "type": ["integer", "string", "array"],
+                            "items": {
+                                "type": ["integer", "string"]
+                            },
+                            "minItems": 1
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "required": [
+                    "eval_set_name"
+                ]
+            }
+        },
+        "task_id_text": {
+            "description": "Optional mapping of hub task id values to text. Keys are `task_id`s and values are an object whose keys are `task_id` `value`s and values are human-readable text.",
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string"
+                }
+            }
+        },
+        "rounds_idx": {
+            "description": "Required 0-based index of the `rounds` entry to use for evaluation.",
+            "type": "integer",
+            "minimum": 0
+        }
+    },
+    "required": [
+        "targets",
+        "eval_sets",
+        "rounds_idx"
+    ]
+}
