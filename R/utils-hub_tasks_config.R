@@ -3,12 +3,13 @@
 #'
 #' @param hub_path A path to the hub.
 #' @param target_id The target_id to filter to.
+#' @param rounds_idx 0-based index of the rounds entry to use.
 #'
 #' @noRd
-get_task_groups_w_target <- function(hub_path, target_id) {
+get_task_groups_w_target <- function(hub_path, target_id, rounds_idx) {
   hub_tasks_config <- hubUtils::read_config(hub_path, config = "tasks")
   round_ids <- hubUtils::get_round_ids(hub_tasks_config)
-  task_groups <- hubUtils::get_round_model_tasks(hub_tasks_config, round_ids[1])
+  task_groups <- hubUtils::get_round_model_tasks(hub_tasks_config, round_ids[rounds_idx + 1])
   task_groups_w_target <- filter_task_groups_to_target(task_groups, target_id)
 
   task_groups_w_target

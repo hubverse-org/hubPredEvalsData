@@ -5,16 +5,17 @@
 #' @param target_id The target_id to filter to.
 #' @param eval_set A list specifying the evaluation set, derived from the
 #' eval_sets field of the predeval config.
+#' @param rounds_idx 0-based index of the rounds entry to use.
 #'
 #' @return A data frame containing the model output data.
 #' @noRd
-load_model_out_in_eval_set <- function(hub_path, target_id, eval_set) {
+load_model_out_in_eval_set <- function(hub_path, target_id, eval_set, rounds_idx) {
   conn <- hubData::connect_hub(hub_path)
 
   # filter to the requested target_id
   hub_tasks_config <- hubUtils::read_config(hub_path, config = "tasks")
   round_ids <- hubUtils::get_round_ids(hub_tasks_config)
-  task_groups <- hubUtils::get_round_model_tasks(hub_tasks_config, round_ids[1])
+  task_groups <- hubUtils::get_round_model_tasks(hub_tasks_config, round_ids[rounds_idx + 1])
   task_groups_w_target <- filter_task_groups_to_target(task_groups, target_id)
 
   target_meta <- task_groups_w_target[[1]]$target_metadata[[1]]
@@ -43,7 +44,7 @@ load_model_out_in_eval_set <- function(hub_path, target_id, eval_set) {
   round_filters <- eval_set$round_filters
 
   # if eval_set specifies a minimum round id, filter to that
-  round_id_var_name <- hub_tasks_config[["rounds"]][[1]][["round_id"]]
+  round_id_var_name <- hub_tasks_config[["rounds"]][[rounds_idx + 1]][["round_id"]]
   if ("min" %in% names(round_filters)) {
     conn <- conn |>
       dplyr::filter(!!rlang::sym(round_id_var_name) >= round_filters$min)

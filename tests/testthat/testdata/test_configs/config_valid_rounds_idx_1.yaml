@@ -1,17 +1,6 @@
 schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.1/config_schema.json
-rounds_idx: 0
+rounds_idx: 1
 targets:
-- target_id: wk inc flu hosp
-  metrics:
-  - wis
-  - ae_median
-  - interval_coverage_50
-  - interval_coverage_95
-  disaggregate_by:
-  - location
-  - reference_date
-  - horizon
-  - target_end_date
 - target_id: wk flu hosp rate category
   metrics:
   - log_score
@@ -24,18 +13,7 @@ targets:
 eval_sets:
 - eval_set_name: Full season
   round_filters:
-    min: '2023-01-21'
-- eval_set_name: Last 4 weeks
-  round_filters:
-    min: '2023-01-21'
-    n_last: 4
-- eval_set_name: set with invalid task id variable name
-  round_filters:
-    min: '2023-01-21'
-  task_filters:
-    location: ["01"]
-    horizon: [1, 2]
-    not_a_real_task_id: 4
+    min: '2022-10-22'
 task_id_text:
   location:
     US: United States
@@ -90,9 +68,4 @@ task_id_text:
     '54': West Virginia
     '55': Wisconsin
     '56': Wyoming
-    '60': American Samoa
-    '66': Guam
-    '69': Northern Mariana Islands
     '72': Puerto Rico
-    '74': U.S. Minor Outlying Islands
-    '78': Virgin Islands

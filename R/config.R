@@ -115,7 +115,7 @@ load_schema_json <- function(config) {
     )
   }
 
-  minimum_version <- "v1.0.0"
+  minimum_version <- "v1.0.1"
   if (schema_version < minimum_version) {
     raise_config_error(
       c(
@@ -150,16 +150,25 @@ validate_config_vs_hub_tasks <- function(hub_path, predevals_config) {
   hub_tasks_config <- hubUtils::read_config(hub_path, config = "tasks")
   task_id_names <- hubUtils::get_task_id_names(hub_tasks_config)
 
-  if (length(hub_tasks_config[["rounds"]]) > 1) {
-    raise_config_error("hubPredEvalsData only supports hubs with a single round group specified in `tasks.json`.")
+  # Validate rounds_idx is within bounds (0-based index from config)
+  num_rounds <- length(hub_tasks_config[["rounds"]])
+  if (predevals_config$rounds_idx >= num_rounds) {
+    raise_config_error(
+      cli::format_inline(
+        "Invalid `rounds_idx` value {.val {predevals_config$rounds_idx}}. ",
+        "Must be less than the number of rounds ({.val {num_rounds}})."
+      )
+    )
   }
-  if (!hub_tasks_config[["rounds"]][[1]][["round_id_from_variable"]]) {
+
+  rounds_idx <- predevals_config$rounds_idx + 1  # Convert 0-based rounds_idx to 1-based for R indexing
+  if (!hub_tasks_config[["rounds"]][[rounds_idx]][["round_id_from_variable"]]) {
     raise_config_error(
       "hubPredEvalsData only supports hubs with `round_id_from_variable` set to `true` in `tasks.json`."
     )
   }
 
-  task_groups <- hub_tasks_config[["rounds"]][[1]][["model_tasks"]]
+  task_groups <- hub_tasks_config[["rounds"]][[rounds_idx]][["model_tasks"]]
 
   # checks for targets
   validate_config_targets(predevals_config, task_groups, task_id_names)

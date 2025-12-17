@@ -187,16 +187,30 @@ test_that(
 )
 
 test_that(
-  "read_predevals_config fails, multiple modeling round groups",
+  "read_predevals_config succeeds, multiple modeling round groups with valid rounds_idx",
   {
     hub_path <- test_path("testdata", "test_hub_invalid_mult_rnd")
+    expect_snapshot(
+      read_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_valid_rounds_idx_1.yaml")
+      )
+    )
+  }
+)
+
+test_that(
+  "read_predevals_config fails, rounds_idx out of bounds",
+  {
+    hub_path <- test_path("testdata", "ecfh")
     expect_error(
       read_config(
         hub_path,
         test_path("testdata", "test_configs",
-                  "config_valid.yaml")
+                  "config_invalid_rounds_idx_out_of_bounds.yaml")
       ),
-      regexp = "hubPredEvalsData only supports hubs with a single round group specified in `tasks.json`."
+      regexp = "Invalid `rounds_idx` value 99. Must be less than the number of rounds"
     )
   }
 )
