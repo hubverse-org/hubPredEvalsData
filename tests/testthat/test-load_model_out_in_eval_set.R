@@ -6,7 +6,8 @@ test_that(
       target_id = "wk flu hosp rate category",
       eval_set = list(
         eval_set_name = "all"
-      )
+      ),
+      rounds_idx = 0
     )
 
     expected_model_out_tbl <- hubData::connect_hub(
@@ -36,7 +37,8 @@ test_that(
         round_filters = list(
           min = "2022-11-19"
         )
-      )
+      ),
+      rounds_idx = 0
     )
 
     expected_model_out_tbl <- hubData::connect_hub(
@@ -68,7 +70,8 @@ test_that(
         round_filters = list(
           n_last = 5
         )
-      )
+      ),
+      rounds_idx = 0
     )
 
     expected_model_out_tbl <- hubData::connect_hub(
@@ -99,7 +102,8 @@ test_that(
         round_filters = list(
           n_last = 4
         )
-      )
+      ),
+      rounds_idx = 0
     )
 
     expected_model_out_tbl <- hubData::connect_hub(
@@ -135,7 +139,8 @@ test_that(
           min = "2023-01-14",
           n_last = 9
         )
-      )
+      ),
+      rounds_idx = 0
     )
 
     expected_model_out_tbl <- hubData::connect_hub(
@@ -171,7 +176,8 @@ test_that(
           min = "2022-11-19", # there are 9 rounds on or after this date
           n_last = 5
         )
-      )
+      ),
+      rounds_idx = 0
     )
 
     expected_model_out_tbl <- hubData::connect_hub(
@@ -211,7 +217,8 @@ test_that(
           location = "US",
           horizon = c(1, 2)
         )
-      )
+      ),
+      rounds_idx = 0
     )
 
     expected_model_out_tbl <- hubData::connect_hub(
