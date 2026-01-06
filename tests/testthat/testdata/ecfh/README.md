@@ -1,0 +1,1 @@
+This directory's `hub-config/tasks.json` was updated as part of implementing the issue [allow hubs with multiple rounds by adding a rounds_idx configuration property #26](https://github.com/hubverse-org/hubPredEvalsData/issues/26) to have two identical rounds, which helped to drive the coding. Previously there was only one round.
