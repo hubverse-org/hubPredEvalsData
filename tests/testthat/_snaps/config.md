@@ -1,7 +1,8 @@
 # read_predevals_config succeeds, valid yaml file
 
     Code
-      read_config(hub_path, test_path("testdata", "test_configs", "config_valid.yaml"))
+      read_predevals_config(hub_path, test_path("testdata", "test_configs",
+        "config_valid.yaml"))
     Output
       $schema_version
       [1] "https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.1/config_schema.json"
@@ -241,7 +242,7 @@
 # read_predevals_config succeeds, valid yaml file two rounds
 
     Code
-      read_config(hub_path, test_path("testdata", "test_configs",
+      read_predevals_config(hub_path, test_path("testdata", "test_configs",
         "config_valid_two_rounds.yaml"))
     Output
       $schema_version
@@ -470,7 +471,7 @@
 # read_predevals_config succeeds, valid yaml file with task id filters
 
     Code
-      read_config(hub_path, test_path("testdata", "test_configs",
+      read_predevals_config(hub_path, test_path("testdata", "test_configs",
         "config_valid_set_filters.yaml"))
     Output
       $schema_version
@@ -729,7 +730,7 @@
 # read_predevals_config succeeds, valid yaml file with length 1 arrays
 
     Code
-      read_config(hub_path, test_path("testdata", "test_configs",
+      read_predevals_config(hub_path, test_path("testdata", "test_configs",
         "config_valid_length_one_arrays.yaml"))
     Output
       $schema_version
@@ -767,7 +768,7 @@
 # read_predevals_config succeeds, valid yaml file with relative metrics
 
     Code
-      read_config(hub_path, test_path("testdata", "test_configs",
+      read_predevals_config(hub_path, test_path("testdata", "test_configs",
         "config_valid_rel_metrics.yaml"))
     Output
       $schema_version
@@ -1014,7 +1015,7 @@
 # read_predevals_config succeeds, valid yaml file with no min_round_id
 
     Code
-      read_config(hub_path, test_path("testdata", "test_configs",
+      read_predevals_config(hub_path, test_path("testdata", "test_configs",
         "config_valid_no_min_round_id.yaml"))
     Output
       $schema_version
@@ -1237,7 +1238,7 @@
 # read_predevals_config succeeds, valid yaml file with no disaggregate_by
 
     Code
-      read_config(hub_path, test_path("testdata", "test_configs",
+      read_predevals_config(hub_path, test_path("testdata", "test_configs",
         "config_valid_no_disaggregate_by.yaml"))
     Output
       $schema_version
@@ -1472,7 +1473,7 @@
 # read_predevals_config succeeds, valid yaml file with no task_id_text
 
     Code
-      read_config(hub_path, test_path("testdata", "test_configs",
+      read_predevals_config(hub_path, test_path("testdata", "test_configs",
         "config_valid_no_task_id_text.yaml"))
     Output
       $schema_version
@@ -1535,7 +1536,7 @@
 # read_predevals_config succeeds, multiple modeling round groups with valid rounds_idx
 
     Code
-      read_config(hub_path, test_path("testdata", "test_configs",
+      read_predevals_config(hub_path, test_path("testdata", "test_configs",
         "config_valid_rounds_idx_1.yaml"))
     Output
       $schema_version

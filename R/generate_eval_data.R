@@ -11,7 +11,7 @@ generate_eval_data <- function(hub_path,
                                config_path,
                                out_path,
                                oracle_output) {
-  config <- read_config(hub_path, config_path)
+  config <- read_predevals_config(hub_path, config_path)
   for (target in config$targets) {
     generate_target_eval_data(hub_path, config, out_path, oracle_output, target)
   }

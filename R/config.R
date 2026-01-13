@@ -5,7 +5,7 @@
 #' options for the evaluation.
 #'
 #' @return A list of configuration options for the evaluation.
-read_config <- function(hub_path, config_path) {
+read_predevals_config <- function(hub_path, config_path) {
   tryCatch(
     {
       config <- yaml::read_yaml(config_path, eval.expr = FALSE)
