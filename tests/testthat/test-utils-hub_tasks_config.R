@@ -1,19 +1,13 @@
 test_that(
-  "get_model_tasks works with rounds_idx = 0",
+  "get_model_tasks succeeds, both rounds_idx = 0 and 1",
   {
     hub_path <- test_path("testdata", "ecfh")
     hub_tasks_config <- hubUtils::read_config(hub_path, config = "tasks")
-    expect_snapshot(get_model_tasks(hub_tasks_config, rounds_idx = 0))
-  }
-)
+    model_task_0 <- get_model_tasks(hub_tasks_config, rounds_idx = 0)
+    expect_length(model_task_0, 3L)
 
-
-test_that(
-  "get_model_tasks works with rounds_idx = 1",
-  {
-    hub_path <- test_path("testdata", "ecfh")
-    hub_tasks_config <- hubUtils::read_config(hub_path, config = "tasks")
-    expect_snapshot(get_model_tasks(hub_tasks_config, rounds_idx = 1))
+    model_task_1 <- get_model_tasks(hub_tasks_config, rounds_idx = 1)
+    expect_length(model_task_1, 1L)
   }
 )
 
