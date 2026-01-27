@@ -6,8 +6,9 @@
 <url><loc>/LICENSE.html</loc></url>
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
+<url><loc>/news/index.html</loc></url>
 <url><loc>/reference/generate_eval_data.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
-<url><loc>/reference/read_config.html</loc></url>
+<url><loc>/reference/read_predevals_config.html</loc></url>
 </urlset>
 
