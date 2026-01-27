@@ -3,10 +3,24 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_snapshot(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_valid.yaml")
+      )
+    )
+  }
+)
+
+test_that(
+  "read_predevals_config succeeds, valid yaml file two rounds",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    expect_snapshot(
+      read_predevals_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_valid_two_rounds.yaml")
       )
     )
   }
@@ -17,7 +31,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_snapshot(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_valid_set_filters.yaml")
@@ -31,7 +45,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_snapshot(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_valid_length_one_arrays.yaml")
@@ -45,7 +59,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_snapshot(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_valid_rel_metrics.yaml")
@@ -59,7 +73,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_snapshot(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_valid_no_min_round_id.yaml")
@@ -73,7 +87,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_snapshot(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_valid_no_disaggregate_by.yaml")
@@ -87,7 +101,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_snapshot(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_valid_no_task_id_text.yaml")
@@ -101,7 +115,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_yaml.yaml")
@@ -116,7 +130,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_no_schema_version.yaml")
@@ -131,7 +145,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_array_schema_version.yaml")
@@ -146,7 +160,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_malformed_schema_version.yaml")
@@ -161,7 +175,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_nonexist_schema_version.yaml")
@@ -176,7 +190,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_old_schema_version.yaml")
@@ -187,16 +201,30 @@ test_that(
 )
 
 test_that(
-  "read_predevals_config fails, multiple modeling round groups",
+  "read_predevals_config succeeds, multiple modeling round groups with valid rounds_idx",
   {
     hub_path <- test_path("testdata", "test_hub_invalid_mult_rnd")
-    expect_error(
-      read_config(
+    expect_snapshot(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
-                  "config_valid.yaml")
+                  "config_valid_rounds_idx_1.yaml")
+      )
+    )
+  }
+)
+
+test_that(
+  "read_predevals_config fails, rounds_idx out of bounds",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    expect_error(
+      read_predevals_config(
+        hub_path,
+        test_path("testdata", "test_configs",
+                  "config_invalid_rounds_idx_out_of_bounds.yaml")
       ),
-      regexp = "hubPredEvalsData only supports hubs with a single round group specified in `tasks.json`."
+      regexp = "Invalid `rounds_idx` value 99. Must be less than the number of rounds"
     )
   }
 )
@@ -206,7 +234,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "test_hub_invalid_rifv_F")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_valid.yaml")
@@ -221,7 +249,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_targets_target_id.yaml")
@@ -236,7 +264,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_targets_metrics.yaml")
@@ -251,7 +279,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_targets_disaggregate_by.yaml")
@@ -266,7 +294,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_set_n_last.yaml")
@@ -281,7 +309,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_set_min_round_id.yaml")
@@ -296,7 +324,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_set_filter_task_name.yaml")
@@ -311,7 +339,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_set_filter_task_value.yaml")
@@ -326,7 +354,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_task_id_text_non_task_id.yaml")
@@ -341,7 +369,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_task_id_text_missing.yaml")
@@ -356,7 +384,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_rel_metrics_non_metric.yaml")
@@ -371,7 +399,7 @@ test_that(
   {
     hub_path <- test_path("testdata", "ecfh")
     expect_error(
-      read_config(
+      read_predevals_config(
         hub_path,
         test_path("testdata", "test_configs",
                   "config_invalid_rel_metrics_no_baseline.yaml")

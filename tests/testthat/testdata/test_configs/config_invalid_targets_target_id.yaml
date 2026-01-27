@@ -1,4 +1,5 @@
-schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.0/config_schema.json
+schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.1/config_schema.json
+rounds_idx: 0
 targets:
 - target_id: THIS IS NOT A REAL TARGET ID
   metrics:

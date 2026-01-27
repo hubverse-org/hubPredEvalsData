@@ -11,7 +11,7 @@ generate_eval_data <- function(hub_path,
                                config_path,
                                out_path,
                                oracle_output) {
-  config <- read_config(hub_path, config_path)
+  config <- read_predevals_config(hub_path, config_path)
   for (target in config$targets) {
     generate_target_eval_data(hub_path, config, out_path, oracle_output, target)
   }
@@ -41,11 +41,11 @@ generate_target_eval_data <- function(hub_path,
   disaggregate_by <- c(list(NULL), as.list(target$disaggregate_by))
   eval_sets <- config$eval_sets
 
-  task_groups_w_target <- get_task_groups_w_target(hub_path, target_id)
+  task_groups_w_target <- get_task_groups_w_target(hub_path, target_id, config$rounds_idx)
   metric_name_to_output_type <- get_metric_name_to_output_type(task_groups_w_target, metrics)
 
   for (eval_set in eval_sets) {
-    model_out_tbl <- load_model_out_in_eval_set(hub_path, target$target_id, eval_set)
+    model_out_tbl <- load_model_out_in_eval_set(hub_path, target$target_id, eval_set, config$rounds_idx)
     if (nrow(model_out_tbl) == 0) {
       cli::cli_inform(
         "No model output data found for target {.val {target_id}}

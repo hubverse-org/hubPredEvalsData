@@ -1,4 +1,18 @@
 test_that(
+  "get_model_tasks succeeds, both rounds_idx = 0 and 1",
+  {
+    hub_path <- test_path("testdata", "ecfh")
+    hub_tasks_config <- hubUtils::read_config(hub_path, config = "tasks")
+    model_task_0 <- get_model_tasks(hub_tasks_config, rounds_idx = 0)
+    expect_length(model_task_0, 3L)
+
+    model_task_1 <- get_model_tasks(hub_tasks_config, rounds_idx = 1)
+    expect_length(model_task_1, 1L)
+  }
+)
+
+
+test_that(
   "filter_task_groups_to_target works",
   {
     task_groups <- list(
