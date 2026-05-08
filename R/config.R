@@ -186,6 +186,9 @@ validate_config_vs_hub_tasks <- function(hub_path, predevals_config) {
   # checks for targets
   validate_config_targets(predevals_config, task_groups, task_id_names)
 
+  # checks for per-target transforms (and inherited transform_defaults)
+  validate_target_transforms(predevals_config, task_groups)
+
   # checks for eval_sets
   validate_config_eval_sets(
     predevals_config,
@@ -293,6 +296,181 @@ validate_config_targets <- function(
         )
       )
     }
+  }
+}
+
+
+#' Validate transform configuration against the hub tasks config.
+#'
+#' Validates the `args` of any transform config — both top-level
+#' `transform_defaults` and any per-target `transform` — against the formals of
+#' the chosen transform function.
+#'
+#' Additionally, for each target:
+#' - If the target's available output types are all non-transformable (e.g.
+#'   pmf-only) and the target has an explicit transform config, raise an error
+#'   (likely a misconfiguration).
+#' - If the target's available output types are all non-transformable and no
+#'   explicit `transform` is set but `transform_defaults` is configured,
+#'   warn that the inherited transform will be silently skipped at scoring
+#'   time.
+#'
+#' @noRd
+validate_target_transforms <- function(predevals_config, task_groups) {
+  transform_defaults <- predevals_config$transform_defaults
+
+  # validate transform_defaults args up-front so the error is raised even if
+  # every target overrides or opts out
+  if (!is.null(transform_defaults)) {
+    validate_transform_args(transform_defaults, target_id = NULL)
+  }
+
+  for (target in predevals_config$targets) {
+    validate_target_transform(target, task_groups, transform_defaults)
+  }
+}
+
+
+#' Validate the transform configuration for a single target.
+#'
+#' Args of an explicit per-target `transform` are checked against the formals
+#' of the chosen function. Then, if a transform would actually be applied to
+#' the target (explicit or inherited), the target's available output types are
+#' checked: an explicit transform on a target with no transformable output
+#' types is an error; an inherited `transform_defaults` on the same is a
+#' warning (the transform is silently skipped at scoring time).
+#'
+#' @importFrom rlang %||%
+#' @noRd
+validate_target_transform <- function(target, task_groups, transform_defaults) {
+  target_transform <- target$transform
+
+  # explicit opt-out: nothing to validate
+  if (isFALSE(target_transform)) {
+    return()
+  }
+
+  # determine whether any transform actually applies to this target
+  effective_transform <- target_transform %||% transform_defaults
+  if (is.null(effective_transform)) {
+    return()
+  }
+
+  # explicit per-target transform set: validate its args
+  if (!is.null(target_transform)) {
+    validate_transform_args(target_transform, target$target_id)
+  }
+
+  # check the target's output types support transformation
+  validate_transform_output_types(
+    target$target_id,
+    task_groups,
+    target_transform
+  )
+}
+
+
+#' Validate that a target's available output types include at least one
+#' transformable output type.
+#'
+#' Called only when an effective transform applies to the target. If none of
+#' the target's available output types support transformation, raises an
+#' error (when the transform is explicitly configured on the target) or warns
+#' (when the transform is inherited from `transform_defaults` and would be
+#' silently skipped at scoring time).
+#'
+#' @param target_id The target id, used for messages and to look up output
+#'   types.
+#' @param task_groups Hub task groups, as produced by `get_task_groups()`.
+#' @param target_transform The per-target `transform` value (a list when
+#'   explicit, `NULL` when inherited from `transform_defaults`).
+#' @noRd
+validate_transform_output_types <- function(
+  target_id,
+  task_groups,
+  target_transform
+) {
+  task_groups_w_target <- filter_task_groups_to_target(task_groups, target_id)
+  available_output_types <- get_output_types(task_groups_w_target)
+  transformable_output_types <- get_transformable_output_types()
+
+  if (any(available_output_types %in% transformable_output_types)) {
+    return()
+  }
+
+  if (!is.null(target_transform)) {
+    # explicit transform on a fully non-transformable target -> error
+    raise_config_error(
+      c(
+        cli::format_inline(
+          "Invalid {.field transform} for target {.val {target_id}}."
+        ),
+        "x" = cli::format_inline(
+          "None of the target's available output types ({.val {available_output_types}}) support transformation."
+        ),
+        "i" = cli::format_inline(
+          "Transformable output type{?s}: {.val {transformable_output_types}}."
+        )
+      )
+    )
+  } else {
+    # inherited transform_defaults on a fully non-transformable target -> warn
+    cli::cli_warn(
+      c(
+        "Inherited {.field transform_defaults} cannot apply to target {.val {target_id}}.",
+        "!" = "None of the target's available output types ({.val {available_output_types}}) support transformation.",
+        "i" = "The transform will be skipped at scoring time.",
+        "i" = "To silence this warning, set {.code transform: false} on this target."
+      )
+    )
+  }
+}
+
+
+#' Validate that the `args` of a transform config are accepted by the
+#' referenced transform function.
+#'
+#' Compares `names(transform$args)` against `formalArgs(func)`, excluding the
+#' data argument `x`.
+#'
+#' @param transform A transform config list (must contain `fun`).
+#' @param target_id Target id for error context, or NULL when validating
+#'   `transform_defaults`.
+#' @noRd
+validate_transform_args <- function(transform, target_id) {
+  func_name <- transform[["fun"]]
+  args <- transform[["args"]]
+
+  if (is.null(args) || length(args) == 0L) {
+    return()
+  }
+
+  func <- get_transform_function(func_name)
+  allowed_args <- setdiff(formalArgs(func), "x")
+
+  extra_args <- setdiff(names(args), allowed_args)
+  if (length(extra_args) > 0) {
+    main_msg <- if (is.null(target_id)) {
+      cli::format_inline(
+        "Invalid {.field args} for {.field transform_defaults}."
+      )
+    } else {
+      cli::format_inline(
+        "Invalid {.field args} for {.field transform} on target {.val {target_id}}."
+      )
+    }
+    raise_config_error(
+      c(
+        main_msg,
+        "x" = cli::format_inline(
+          "Transform function {.val {func_name}} does not accept argument{?s} ",
+          "{.val {extra_args}}."
+        ),
+        "i" = cli::format_inline(
+          "Allowed argument{?s}: {.val {allowed_args}}."
+        )
+      )
+    )
   }
 }
 

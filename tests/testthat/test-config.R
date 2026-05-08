@@ -369,3 +369,91 @@ test_that("read_predevals_config fails, invalid relative metrics, no baseline", 
     regexp = "must have property baseline when property relative_metrics is present"
   )
 })
+
+test_that("read_predevals_config succeeds, v1.1.0 with transform_defaults", {
+  hub_path <- test_path("testdata", "ecfh")
+  expect_no_error(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_valid_transform_defaults.yaml"
+      )
+    )
+  )
+})
+
+test_that("read_predevals_config succeeds, v1.1.0 with per-target transform", {
+  hub_path <- test_path("testdata", "ecfh")
+  expect_no_error(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_valid_transform_per_target.yaml"
+      )
+    )
+  )
+})
+
+test_that("read_predevals_config fails, invalid transform function name", {
+  hub_path <- test_path("testdata", "ecfh")
+  expect_error(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_invalid_transform_function.yaml"
+      )
+    ),
+    regexp = "must be equal to one of the allowed values"
+  )
+})
+
+test_that("read_predevals_config fails, transform args not accepted by function", {
+  hub_path <- test_path("testdata", "ecfh")
+  expect_error(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_invalid_transform_args.yaml"
+      )
+    ),
+    regexp = 'Transform function "log_shift" does not accept argument "shift"'
+  )
+})
+
+test_that("read_predevals_config fails, explicit transform on pmf-only target", {
+  hub_path <- test_path("testdata", "ecfh")
+  expect_error(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_invalid_transform_pmf_only.yaml"
+      )
+    ),
+    regexp = 'Invalid transform for target "wk flu hosp rate category"'
+  )
+})
+
+test_that("read_predevals_config warns, transform_defaults inherited by pmf-only target", {
+  hub_path <- test_path("testdata", "ecfh")
+  expect_warning(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_warn_transform_pmf_inherited.yaml"
+      )
+    ),
+    regexp = 'Inherited transform_defaults cannot apply to target "wk flu hosp rate category"'
+  )
+})

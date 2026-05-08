@@ -1,0 +1,28 @@
+schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.1.0/config_schema.json
+rounds_idx: 0
+targets:
+- target_id: wk inc flu hosp
+  metrics:
+  - wis
+  - ae_median
+  - interval_coverage_50
+  - interval_coverage_95
+  transform:
+    fun: log_shift
+    args:
+      offset: 1
+    append: true
+    label: log
+  disaggregate_by:
+  - location
+  - reference_date
+  - horizon
+  - target_end_date
+- target_id: wk flu hosp rate category
+  metrics:
+  - log_score
+  - rps
+eval_sets:
+- eval_set_name: Full season
+  round_filters:
+    min: '2023-01-21'
