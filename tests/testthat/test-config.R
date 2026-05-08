@@ -142,6 +142,7 @@ test_that("read_predevals_config fails, arbitrary string schema_version in yaml 
   )
 })
 
+# nolint next: line_length_linter.
 test_that("read_predevals_config fails, well-formatted but unsupported schema_version in yaml file (version never existed)", {
   hub_path <- test_path("testdata", "ecfh")
   expect_error(

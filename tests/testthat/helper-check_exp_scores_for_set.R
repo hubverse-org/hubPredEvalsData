@@ -59,10 +59,11 @@ check_exp_scores_for_set <- function(
         dplyr::select(-dplyr::contains("relative"))
     }
 
+    # nolint next: object_usage_linter.
     expect_df_equal_up_to_order(
       actual_scores,
       expected_scores,
       ignore_attr = TRUE
-    ) # nolint: object_usage_linter
+    )
   }
 }
