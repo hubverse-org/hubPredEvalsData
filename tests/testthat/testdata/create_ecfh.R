@@ -16,11 +16,15 @@ library(hubData)
 
 hub_path <- testthat::test_path("testdata", "ecfh")
 
-models <- list.dirs(file.path(hub_path, "model-output"),
-                    full.names = FALSE, recursive = FALSE)
+models <- list.dirs(
+  file.path(hub_path, "model-output"),
+  full.names = FALSE,
+  recursive = FALSE
+)
 reference_dates <- list.files(
   file.path(hub_path, "model-output", models[[1]]),
-  full.names = FALSE, recursive = FALSE
+  full.names = FALSE,
+  recursive = FALSE
 ) |>
   substr(1, 10)
 
@@ -36,7 +40,12 @@ for (model in models) {
   }
   for (reference_date in reference_dates) {
     model_out_tbl <- readr::read_csv(
-      file.path(hub_path, "model-output", model, paste0(reference_date, "-", model, ".csv"))
+      file.path(
+        hub_path,
+        "model-output",
+        model,
+        paste0(reference_date, "-", model, ".csv")
+      )
     ) |>
       dplyr::filter(
         location %in% c("US", "01"),
@@ -46,12 +55,19 @@ for (model in models) {
 
     write.csv(
       model_out_tbl,
-      file = file.path(hub_path, "model-output", model_short,
-                       paste0(reference_date, "-", model_short, ".csv")),
+      file = file.path(
+        hub_path,
+        "model-output",
+        model_short,
+        paste0(reference_date, "-", model_short, ".csv")
+      ),
       row.names = FALSE
     )
   }
 }
 
-unlink(file.path(hub_path, "model-output", "Flusight-baseline"), recursive = TRUE)
+unlink(
+  file.path(hub_path, "model-output", "Flusight-baseline"),
+  recursive = TRUE
+)
 unlink(file.path(hub_path, "model-output", "MOBS-GLEAM_FLUH"), recursive = TRUE)

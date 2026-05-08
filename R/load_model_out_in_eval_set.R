@@ -9,7 +9,12 @@
 #'
 #' @return A data frame containing the model output data.
 #' @noRd
-load_model_out_in_eval_set <- function(hub_path, target_id, eval_set, rounds_idx) {
+load_model_out_in_eval_set <- function(
+  hub_path,
+  target_id,
+  eval_set,
+  rounds_idx
+) {
   conn <- hubData::connect_hub(hub_path)
 
   # filter to the requested target_id
@@ -44,7 +49,9 @@ load_model_out_in_eval_set <- function(hub_path, target_id, eval_set, rounds_idx
   round_filters <- eval_set$round_filters
 
   # if eval_set specifies a minimum round id, filter to that
-  round_id_var_name <- hub_tasks_config[["rounds"]][[rounds_idx + 1]][["round_id"]]
+  round_id_var_name <- hub_tasks_config[["rounds"]][[rounds_idx + 1]][[
+    "round_id"
+  ]]
   if ("min" %in% names(round_filters)) {
     conn <- conn |>
       dplyr::filter(!!rlang::sym(round_id_var_name) >= round_filters$min)
