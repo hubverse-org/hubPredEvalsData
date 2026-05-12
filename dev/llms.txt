@@ -12,6 +12,7 @@ You can install the development version of hubPredEvalsData from
 [GitHub](https://github.com/) with:
 
 ``` r
+
 # install.packages("remotes")
 remotes::install_github("hubverse-org/hubPredEvalsData")
 ```
