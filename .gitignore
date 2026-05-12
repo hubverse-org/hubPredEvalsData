@@ -6,3 +6,5 @@
 .secrets
 .quarto
 docs
+.attic/
+.claude/settings.local.json
