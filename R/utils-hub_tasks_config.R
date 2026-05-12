@@ -38,8 +38,10 @@ filter_task_groups_to_target <- function(task_groups, target_id) {
   task_groups <- purrr::map(
     task_groups,
     function(task_group) {
-      task_group$target_metadata <- purrr::keep(task_group$target_metadata,
-                                                ~ .x$target_id == target_id)
+      task_group$target_metadata <- purrr::keep(
+        task_group$target_metadata,
+        ~ .x$target_id == target_id
+      )
       task_group
     }
   )
@@ -108,7 +110,9 @@ get_output_type_ids_for_type <- function(task_groups, output_type) {
   )
 
   # Small groups should contain subsets of the largest group, so this is our reference.
-  output_type_ids <- output_type_ids_by_group[[which.max(lengths(output_type_ids_by_group))]]
+  output_type_ids <- output_type_ids_by_group[[which.max(lengths(
+    output_type_ids_by_group
+  ))]]
 
   # check that the output type id values in each group are a (possibly improper)
   # subset of the output type id values in the group with the most values, in
@@ -127,7 +131,9 @@ get_output_type_ids_for_type <- function(task_groups, output_type) {
 
     # if output_type_ids and output_type_ids_group have some entries in common
     # but order differs, raise an error
-    output_type_ids_subset <- output_type_ids[output_type_ids %in% output_type_ids_group]
+    output_type_ids_subset <- output_type_ids[
+      output_type_ids %in% output_type_ids_group
+    ]
     if (!identical(output_type_ids_subset, output_type_ids_group)) {
       cli::cli_abort(
         "In hub's tasks.json, output type ids for output type {.val {output_type}}

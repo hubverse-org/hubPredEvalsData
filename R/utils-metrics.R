@@ -25,7 +25,10 @@ get_metric_name_to_output_type <- function(task_groups_w_target, metrics) {
 
   # manually handle interval coverage
   if ("quantile" %in% available_output_types) {
-    result$output_type[grepl(pattern = "^interval_coverage_", x = metrics)] <- "quantile"
+    result$output_type[grepl(
+      pattern = "^interval_coverage_",
+      x = metrics
+    )] <- "quantile"
   }
 
   # other metrics

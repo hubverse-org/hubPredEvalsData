@@ -41,8 +41,11 @@ validate_config_vs_schema <- function(config) {
   config_json <- jsonlite::toJSON(config, auto_unbox = TRUE)
   schema_json <- load_schema_json(config)
 
-  valid <- jsonvalidate::json_validate(config_json, schema_json,
-    engine = "ajv", verbose = TRUE,
+  valid <- jsonvalidate::json_validate(
+    config_json,
+    schema_json,
+    engine = "ajv",
+    verbose = TRUE,
     greedy = TRUE
   )
 
@@ -52,8 +55,10 @@ validate_config_vs_schema <- function(config) {
         m = dplyr::case_when(
           .data$keyword == "required" ~ paste(.data$message, "."),
           .data$keyword == "additionalProperties" ~ paste0(
-            .data$message, "; saw unexpected property '",
-            .data$params$additionalProperty, "'."
+            .data$message,
+            "; saw unexpected property '",
+            .data$params$additionalProperty,
+            "'."
           ),
           TRUE ~ paste("-", .data$instancePath, .data$message, ".")
         )
@@ -76,12 +81,18 @@ validate_config_vs_schema <- function(config) {
 #'
 #' @noRd
 load_schema_json <- function(config) {
-  if (! "schema_version" %in% names(config)) {
-    raise_config_error("The predevals config file is required to contain a `schema_version` property.")
+  if (!"schema_version" %in% names(config)) {
+    raise_config_error(
+      "The predevals config file is required to contain a `schema_version` property."
+    )
   }
 
-  if (! is.character(config$schema_version) || length(config$schema_version) != 1) {
-    raise_config_error("The `schema_version` property of the config schema must be a string.")
+  if (
+    !is.character(config$schema_version) || length(config$schema_version) != 1
+  ) {
+    raise_config_error(
+      "The `schema_version` property of the config schema must be a string."
+    )
   }
 
   schema_version <- hubUtils::extract_schema_version(config$schema_version)
@@ -99,7 +110,7 @@ load_schema_json <- function(config) {
     full.names = FALSE,
     recursive = FALSE
   )
-  if (! schema_version %in% available_versions) {
+  if (!schema_version %in% available_versions) {
     raise_config_error(
       c(
         cli::format_inline(
@@ -132,12 +143,14 @@ load_schema_json <- function(config) {
     )
   }
 
-  schema_path <- system.file("schema", schema_version, "config_schema.json",
-                             package = "hubPredEvalsData")
+  schema_path <- system.file(
+    "schema",
+    schema_version,
+    "config_schema.json",
+    package = "hubPredEvalsData"
+  )
 
-  schema_json <- jsonlite::read_json(schema_path,
-    auto_unbox = TRUE
-  ) |>
+  schema_json <- jsonlite::read_json(schema_path, auto_unbox = TRUE) |>
     jsonlite::toJSON(auto_unbox = TRUE)
 
   schema_json
@@ -161,7 +174,7 @@ validate_config_vs_hub_tasks <- function(hub_path, predevals_config) {
     )
   }
 
-  rounds_idx <- predevals_config$rounds_idx + 1  # Convert 0-based rounds_idx to 1-based for R indexing
+  rounds_idx <- predevals_config$rounds_idx + 1 # Convert 0-based rounds_idx to 1-based for R indexing
   if (!hub_tasks_config[["rounds"]][[rounds_idx]][["round_id_from_variable"]]) {
     raise_config_error(
       "hubPredEvalsData only supports hubs with `round_id_from_variable` set to `true` in `tasks.json`."
@@ -174,7 +187,12 @@ validate_config_vs_hub_tasks <- function(hub_path, predevals_config) {
   validate_config_targets(predevals_config, task_groups, task_id_names)
 
   # checks for eval_sets
-  validate_config_eval_sets(predevals_config, hub_tasks_config, task_groups, task_id_names)
+  validate_config_eval_sets(
+    predevals_config,
+    hub_tasks_config,
+    task_groups,
+    task_id_names
+  )
 
   # checks for task_id_text
   validate_config_task_id_text(predevals_config, task_groups, task_id_names)
@@ -187,7 +205,11 @@ validate_config_vs_hub_tasks <- function(hub_path, predevals_config) {
 #' - disaggregate_by entries are task id variable names
 #'
 #' @noRd
-validate_config_targets <- function(predevals_config, task_groups, task_id_names) {
+validate_config_targets <- function(
+  predevals_config,
+  task_groups,
+  task_id_names
+) {
   for (target in predevals_config$targets) {
     target_id <- target$target_id
 
@@ -197,7 +219,9 @@ validate_config_targets <- function(predevals_config, task_groups, task_id_names
     # check that target_id in the predevals config appears in the hub tasks
     if (length(task_groups_w_target) == 0) {
       raise_config_error(
-        cli::format_inline("Target id {.val {target_id}} not found in any task group.")
+        cli::format_inline(
+          "Target id {.val {target_id}} not found in any task group."
+        )
       )
     }
 
@@ -208,7 +232,9 @@ validate_config_targets <- function(predevals_config, task_groups, task_id_names
     )
     unsupported_metrics <- setdiff(
       target$metrics,
-      metric_name_to_output_type$metric[!is.na(metric_name_to_output_type$output_type)]
+      metric_name_to_output_type$metric[
+        !is.na(metric_name_to_output_type$output_type)
+      ]
     )
 
     if (length(unsupported_metrics) > 0) {
@@ -243,7 +269,9 @@ validate_config_targets <- function(predevals_config, task_groups, task_id_names
             "Requested relative metrics for metrics that were not requested ",
             "for {.arg target_id} {.val {target_id}}."
           ),
-          "i" = cli::format_inline("Requested metric{?s}: {.val {target$metrics}}."),
+          "i" = cli::format_inline(
+            "Requested metric{?s}: {.val {target$metrics}}."
+          ),
           "x" = cli::format_inline(
             "Relative metric{?s} not found in the requested metrics: ",
             "{.val {extra_relative_metrics}}."
@@ -277,13 +305,20 @@ validate_config_targets <- function(predevals_config, task_groups, task_id_names
 #'    for that task id as specified in the hub's config
 #'
 #' @noRd
-validate_config_eval_sets <- function(predevals_config, hub_tasks_config, task_groups, task_id_names) {
+validate_config_eval_sets <- function(
+  predevals_config,
+  hub_tasks_config,
+  task_groups,
+  task_id_names
+) {
   hub_round_ids <- hubUtils::get_round_ids(hub_tasks_config)
   for (eval_set in predevals_config$eval_sets) {
     # check that min is a valid round_id
     # only do this check if eval_set$round_filters$min is specified
     round_filters <- eval_set$round_filters
-    if ("min" %in% names(round_filters) && !round_filters$min %in% hub_round_ids) {
+    if (
+      "min" %in% names(round_filters) && !round_filters$min %in% hub_round_ids
+    ) {
       raise_config_error(
         cli::format_inline(
           "Minimum round id {.val {round_filters$min}} for evaluation ",
@@ -313,7 +348,10 @@ validate_config_eval_sets <- function(predevals_config, hub_tasks_config, task_g
     error_messages <- purrr::map(
       task_ids_filtered_on,
       function(task_id_name) {
-        extra_set_filter_values <- setdiff(task_filters[[task_id_name]], get_task_id_values(task_groups, task_id_name))
+        extra_set_filter_values <- setdiff(
+          task_filters[[task_id_name]],
+          get_task_id_values(task_groups, task_id_name)
+        )
         if (length(extra_set_filter_values) == 0) {
           NULL
         } else {
@@ -338,7 +376,11 @@ validate_config_eval_sets <- function(predevals_config, hub_tasks_config, task_g
 #' - check that all values of the task id variable in the hub appear as task_id_text item keys
 #'
 #' @noRd
-validate_config_task_id_text <- function(predevals_config, task_groups, task_id_names) {
+validate_config_task_id_text <- function(
+  predevals_config,
+  task_groups,
+  task_id_names
+) {
   # all task_id_text items must be valid task id variable names
   extra_task_id_text_names <- setdiff(
     names(predevals_config$task_id_text),

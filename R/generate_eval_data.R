@@ -7,10 +7,7 @@
 #' @param oracle_output A data frame of oracle output to use for the evaluation.
 #'
 #' @export
-generate_eval_data <- function(hub_path,
-                               config_path,
-                               out_path,
-                               oracle_output) {
+generate_eval_data <- function(hub_path, config_path, out_path, oracle_output) {
   config <- read_predevals_config(hub_path, config_path)
   for (target in config$targets) {
     generate_target_eval_data(hub_path, config, out_path, oracle_output, target)
@@ -27,11 +24,13 @@ generate_eval_data <- function(hub_path,
 #' "metrics", and "disaggregate_by".
 #'
 #' @noRd
-generate_target_eval_data <- function(hub_path,
-                                      config,
-                                      out_path,
-                                      oracle_output,
-                                      target) {
+generate_target_eval_data <- function(
+  hub_path,
+  config,
+  out_path,
+  oracle_output,
+  target
+) {
   target_id <- target$target_id
   metrics <- target$metrics
   # if relative_metrics and baseline are not provided, the are NULL
@@ -41,11 +40,23 @@ generate_target_eval_data <- function(hub_path,
   disaggregate_by <- c(list(NULL), as.list(target$disaggregate_by))
   eval_sets <- config$eval_sets
 
-  task_groups_w_target <- get_task_groups_w_target(hub_path, target_id, config$rounds_idx)
-  metric_name_to_output_type <- get_metric_name_to_output_type(task_groups_w_target, metrics)
+  task_groups_w_target <- get_task_groups_w_target(
+    hub_path,
+    target_id,
+    config$rounds_idx
+  )
+  metric_name_to_output_type <- get_metric_name_to_output_type(
+    task_groups_w_target,
+    metrics
+  )
 
   for (eval_set in eval_sets) {
-    model_out_tbl <- load_model_out_in_eval_set(hub_path, target$target_id, eval_set, config$rounds_idx)
+    model_out_tbl <- load_model_out_in_eval_set(
+      hub_path,
+      target$target_id,
+      eval_set,
+      config$rounds_idx
+    )
     if (nrow(model_out_tbl) == 0) {
       cli::cli_inform(
         "No model output data found for target {.val {target_id}}
@@ -81,10 +92,17 @@ generate_target_eval_data <- function(hub_path,
 #' - If by is not NULL, the scores are saved in
 #' out_path/target_id/eval_set_name/by/scores.csv
 #' @noRd
-get_and_save_scores <- function(model_out_tbl, oracle_output, metric_name_to_output_type,
-                                relative_metrics, baseline,
-                                target_id, eval_set_name, by,
-                                out_path) {
+get_and_save_scores <- function(
+  model_out_tbl,
+  oracle_output,
+  metric_name_to_output_type,
+  relative_metrics,
+  baseline,
+  target_id,
+  eval_set_name,
+  by,
+  out_path
+) {
   # Iterate over the output types and calculate scores for each
   scores <- purrr::map(
     unique(metric_name_to_output_type$output_type),
@@ -108,7 +126,9 @@ get_and_save_scores <- function(model_out_tbl, oracle_output, metric_name_to_out
   # rows within each group.
   group_cols <- c("model_id", by)
   n_tasks_by_group <- model_out_tbl |>
-    dplyr::select(!dplyr::all_of(c("output_type", "output_type_id", "value"))) |>
+    dplyr::select(
+      !dplyr::all_of(c("output_type", "output_type_id", "value"))
+    ) |>
     dplyr::group_by(dplyr::across(dplyr::all_of(group_cols))) |>
     dplyr::distinct() |>
     dplyr::summarize(n = dplyr::n())
@@ -122,18 +142,27 @@ get_and_save_scores <- function(model_out_tbl, oracle_output, metric_name_to_out
   if (!dir.exists(target_set_by_out_path)) {
     dir.create(target_set_by_out_path, recursive = TRUE)
   }
-  utils::write.csv(scores,
-                   file = file.path(target_set_by_out_path, "scores.csv"),
-                   row.names = FALSE)
+  utils::write.csv(
+    scores,
+    file = file.path(target_set_by_out_path, "scores.csv"),
+    row.names = FALSE
+  )
 }
 
 
 #' Get scores for a target in a given evaluation set for a specific output type.
 #' @noRd
-get_scores_for_output_type <- function(model_out_tbl, oracle_output, metric_name_to_output_type,
-                                       relative_metrics, baseline,
-                                       target_id, eval_set_name, by,
-                                       output_type) {
+get_scores_for_output_type <- function(
+  model_out_tbl,
+  oracle_output,
+  metric_name_to_output_type,
+  relative_metrics,
+  baseline,
+  target_id,
+  eval_set_name,
+  by,
+  output_type
+) {
   metrics <- metric_name_to_output_type$metric[
     metric_name_to_output_type$output_type == output_type
   ]
@@ -141,7 +170,8 @@ get_scores_for_output_type <- function(model_out_tbl, oracle_output, metric_name
     relative_metrics <- relative_metrics[relative_metrics %in% metrics]
   }
   scores <- hubEvals::score_model_out(
-    model_out_tbl = model_out_tbl |> dplyr::filter(.data[["output_type"]] == !!output_type),
+    model_out_tbl = model_out_tbl |>
+      dplyr::filter(.data[["output_type"]] == !!output_type),
     oracle_output = oracle_output,
     metrics = metrics,
     relative_metrics = relative_metrics,
@@ -160,7 +190,11 @@ get_scores_for_output_type <- function(model_out_tbl, oracle_output, metric_name
       metrics,
       function(metric) {
         c(
-          if (metric %in% relative_metrics) paste0(metric, "_scaled_relative_skill") else NULL,
+          if (metric %in% relative_metrics) {
+            paste0(metric, "_scaled_relative_skill")
+          } else {
+            NULL
+          },
           metric
         )
       }
