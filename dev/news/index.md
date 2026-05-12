@@ -2,6 +2,20 @@
 
 ## hubPredEvalsData (development version)
 
+### New Features
+
+- Added optional scale-transformation support to `predevals-config.yml`
+  via schema version `v1.1.0`
+  ([\#39](https://github.com/hubverse-org/hubPredEvalsData/issues/39)):
+  - `transform_defaults` — top-level default transform applied to all
+    transformable targets.
+  - `targets[*].transform` — per-target transform that overrides
+    `transform_defaults`, or the literal `false` to opt a target out.
+  - Supported transform functions: `log_shift`, `sqrt`, `log1p`, `log`,
+    `log10`, `log2`.
+- Existing v1.0.1 configs continue to validate against v1.1.0 without
+  changes.
+
 ## hubPredEvalsData 1.0.0
 
 This is a **breaking change** release that adds support for hubs with

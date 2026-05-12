@@ -33,6 +33,17 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="hubpredevalsdata-development-version">hubPredEvalsData (development version)<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-development-version"></a></h2>
+<div class="section level3">
+<h3 id="new-features-development-version">New Features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<ul><li>Added optional scale-transformation support to <code>predevals-config.yml</code> via schema version <code>v1.1.0</code> (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/39" class="external-link">#39</a>):
+<ul><li>
+<code>transform_defaults</code> — top-level default transform applied to all transformable targets.</li>
+<li>
+<code>targets[*].transform</code> — per-target transform that overrides <code>transform_defaults</code>, or the literal <code>false</code> to opt a target out.</li>
+<li>Supported transform functions: <code>log_shift</code>, <code>sqrt</code>, <code>log1p</code>, <code>log</code>, <code>log10</code>, <code>log2</code>.</li>
+</ul></li>
+<li>Existing v1.0.1 configs continue to validate against v1.1.0 without changes.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="hubpredevalsdata-100">hubPredEvalsData 1.0.0<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-100"></a></h2>
