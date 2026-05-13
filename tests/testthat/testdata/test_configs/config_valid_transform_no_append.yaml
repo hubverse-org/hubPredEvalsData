@@ -11,16 +11,8 @@ targets:
     fun: log_shift
     args:
       offset: 1
-    append: true
+    append: false
     label: log
-  disaggregate_by:
-  - location
-  - reference_date
-  - horizon
-  - target_end_date
-- target_id: wk flu hosp rate category
-  metrics:
-  - log_score
 eval_sets:
 - eval_set_name: Full season
   round_filters:

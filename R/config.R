@@ -340,28 +340,22 @@ validate_target_transforms <- function(predevals_config, task_groups) {
 #' types is an error; an inherited `transform_defaults` on the same is a
 #' warning (the transform is silently skipped at scoring time).
 #'
-#' @importFrom rlang %||%
 #' @noRd
 validate_target_transform <- function(target, task_groups, transform_defaults) {
+  if (is.null(resolve_target_transform(target, transform_defaults))) {
+    return()
+  }
+
+  # `target$transform` is the *raw* per-target value (NULL when inherited from
+  # defaults). Both downstream checks need that distinction:
+  # - args are validated only when an explicit per-target transform is set.
+  # - validate_transform_output_types branches error (explicit) vs warn
+  #   (inherited) on whether `target_transform` is NULL.
   target_transform <- target$transform
-
-  # explicit opt-out: nothing to validate
-  if (isFALSE(target_transform)) {
-    return()
-  }
-
-  # determine whether any transform actually applies to this target
-  effective_transform <- target_transform %||% transform_defaults
-  if (is.null(effective_transform)) {
-    return()
-  }
-
-  # explicit per-target transform set: validate its args
   if (!is.null(target_transform)) {
     validate_transform_args(target_transform, target$target_id)
   }
 
-  # check the target's output types support transformation
   validate_transform_output_types(
     target$target_id,
     task_groups,
