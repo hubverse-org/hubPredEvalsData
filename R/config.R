@@ -189,6 +189,10 @@ validate_config_vs_hub_tasks <- function(hub_path, predevals_config) {
   # checks for per-target transforms (and inherited transform_defaults)
   validate_target_transforms(predevals_config, task_groups)
 
+  # warns / errors when an ordinal-only pmf metric is requested on a pre-v4
+  # tasks-schema (where output_type_id is split across required/optional)
+  validate_ordinal_pmf_dispatch(predevals_config, hub_tasks_config, task_groups)
+
   # checks for eval_sets
   validate_config_eval_sets(
     predevals_config,
@@ -462,6 +466,93 @@ validate_transform_args <- function(transform, target_id) {
         ),
         "i" = cli::format_inline(
           "Allowed argument{?s}: {.val {allowed_args}}."
+        )
+      )
+    )
+  }
+}
+
+
+#' Validate that any ordinal-pmf target requesting an ordinal-only metric
+#' (e.g. `rps`) has unambiguous level ordering in the hub's tasks.json.
+#'
+#' In hubverse tasks-schema v4+, `output_type_id` for pmf is just
+#' `{required: [...]}`, so the array order is the ordinal level order. In
+#' v2/v3, values may be split across `required` and `optional`; the
+#' across-wrapper ordering is undefined. We always read `$required` only at
+#' scoring time, so:
+#' - v4+: silent (the schema and our reader agree).
+#' - v2/v3 with `$optional` null or empty: warn, since we'll silently ignore
+#'   the `$optional` slot that we treat as conventionally empty for pmf.
+#' - v2/v3 with `$optional` populated: error, since levels would be missed.
+#' @noRd
+validate_ordinal_pmf_dispatch <- function(
+  predevals_config,
+  hub_tasks_config,
+  task_groups
+) {
+  schema_version <- hubUtils::extract_schema_version(
+    hub_tasks_config[["schema_version"]]
+  )
+  if (hubUtils::version_gte("v4.0.0", schema_version = schema_version)) {
+    return(invisible())
+  }
+
+  ordinal_metrics <- ordinal_only_pmf_metrics() # nolint: object_usage
+
+  for (target in predevals_config$targets) {
+    target_id <- target$target_id
+    task_groups_w_target <- filter_task_groups_to_target(task_groups, target_id)
+    if (length(task_groups_w_target) == 0) {
+      next # validate_config_targets already errored on this
+    }
+    if (!is_target_ordinal(task_groups_w_target)) {
+      next
+    }
+    requested_ordinal_metrics <- intersect(target$metrics, ordinal_metrics)
+    if (length(requested_ordinal_metrics) == 0) {
+      next
+    }
+
+    # Look for any pmf level the hub put in `$optional`. If we find one we
+    # cannot safely score, because reading `$required` alone would drop it.
+    optional_levels <- unlist(purrr::map(
+      task_groups_w_target,
+      function(task_group) task_group$output_type$pmf$output_type_id$optional
+    ))
+    if (length(optional_levels) > 0) {
+      raise_config_error(
+        c(
+          cli::format_inline(
+            "Cannot score {.val {requested_ordinal_metrics}} on ordinal pmf
+             target {.val {target_id}} under tasks-schema {.val {schema_version}}."
+          ),
+          "x" = cli::format_inline(
+            "{.field output_type_id$optional} for pmf is non-empty
+             ({.val {unique(optional_levels)}}); reading {.field $required}
+             alone would silently drop these levels."
+          ),
+          "i" = paste0(
+            "Bump the hub's tasks-schema to v4.0.0+ (where pmf output_type_id ",
+            "is a single `required` array) to disambiguate ordinal level order."
+          )
+        )
+      )
+    }
+
+    cli::cli_warn(
+      c(
+        cli::format_inline(
+          "Scoring {.val {requested_ordinal_metrics}} on ordinal pmf target
+           {.val {target_id}}: the hub's tasks-schema is
+           {.val {schema_version}} and its pmf
+           {.field output_type_id$optional} is empty, so
+           {.field output_type_id$required} is taken as the ordinal level
+           order."
+        ),
+        "i" = paste0(
+          "Upgrade the hub's tasks-schema to v4.0.0+ to make the level order ",
+          "explicit and silence this warning."
         )
       )
     )

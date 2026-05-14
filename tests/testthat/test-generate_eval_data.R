@@ -270,6 +270,50 @@ test_that("generate_eval_data applies per-target transform with append=TRUE", {
 })
 
 
+test_that("generate_eval_data scores rps on ordinal pmf targets (#48)", {
+  # Without output_type_id_order, scoringutils dispatches pmf data as
+  # forecast_nominal and rejects rps with "Must be a subset of {'log_score'}".
+  # generate_eval_data must read the ordinal level order from the hub's
+  # tasks.json and forward it to score_model_out().
+  #
+  # Uses a synthetic hub rather than ecfh because the ecfh pmf rows drift from
+  # summing to exactly 1 by ~2e-8, which scoringRules::rps_probs still rejects
+  # under its `<= .Machine$double.eps` check (tracked at hubEvals#74). Powers
+  # of 1/2 here sum to exactly 1.0 in IEEE 754, so rps actually computes.
+  hub_path <- withr::local_tempdir()
+  out_path <- withr::local_tempdir()
+  setup_ordinal_pmf_hub(hub_path)
+  config_path <- write_ordinal_pmf_config(hub_path)
+
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
+
+  expect_no_error(
+    generate_eval_data(
+      hub_path = hub_path,
+      config_path = config_path,
+      out_path = out_path,
+      oracle_output = oracle_output
+    )
+  )
+
+  scores <- read.csv(
+    file.path(out_path, "hosp rate category", "Full", "scores.csv")
+  )
+  expect_true(all(c("log_score", "rps") %in% names(scores)))
+  expect_true(all(is.finite(scores$log_score)))
+  expect_true(all(is.finite(scores$rps)))
+
+  # good-model concentrates mass at the truth bin; bad-model concentrates at
+  # the opposite end. If output_type_id_order were dropped, mis-ordered, or
+  # reversed, this comparison would no longer reflect the underlying skill.
+  good <- scores[scores$model_id == "good-model", ]
+  bad <- scores[scores$model_id == "bad-model", ]
+  expect_lt(good$rps, bad$rps)
+  expect_lt(good$log_score, bad$log_score)
+})
+
+
 test_that("generate_eval_data applies transform_defaults to inheriting targets and skips opt-out targets", {
   out_path <- withr::local_tempdir()
   hub_path <- test_path("testdata", "ecfh")

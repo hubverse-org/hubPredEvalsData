@@ -41,6 +41,19 @@ get_metric_name_to_output_type <- function(task_groups_w_target, metrics) {
 }
 
 
+#' pmf metrics that scoringutils only exposes under ordinal dispatch (i.e. they
+#' appear in `get_metrics(example_ordinal)` but not `get_metrics(example_nominal)`).
+#' Used to decide when we have to resolve and forward `output_type_id_order` to
+#' `score_model_out()`.
+#' @noRd
+ordinal_only_pmf_metrics <- function() {
+  setdiff(
+    names(scoringutils::get_metrics(scoringutils::example_ordinal)),
+    names(scoringutils::get_metrics(scoringutils::example_nominal))
+  )
+}
+
+
 #' Get the standard metrics that are supported for a given output type
 #' @noRd
 get_standard_metrics <- function(output_type, target_is_ordinal) {

@@ -11,7 +11,6 @@ targets:
 - target_id: wk flu hosp rate category
   metrics:
   - log_score
-  - rps
 eval_sets:
 - eval_set_name: Full season
   round_filters:

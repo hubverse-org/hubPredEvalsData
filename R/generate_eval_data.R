@@ -95,7 +95,8 @@ generate_target_eval_data <- function(
         eval_set_name = eval_set$eval_set_name,
         by = by,
         out_path = out_path,
-        transform = transform
+        transform = transform,
+        task_groups_w_target = task_groups_w_target
       )
     }
   }
@@ -121,7 +122,8 @@ get_and_save_scores <- function(
   eval_set_name,
   by,
   out_path,
-  transform
+  transform,
+  task_groups_w_target
 ) {
   # Iterate over the output types and calculate scores for each
   scores <- purrr::map(
@@ -136,7 +138,8 @@ get_and_save_scores <- function(
       eval_set_name = eval_set_name,
       by = by,
       output_type = .x,
-      transform = transform
+      transform = transform,
+      task_groups_w_target = task_groups_w_target
     )
   ) |>
     purrr::reduce(dplyr::left_join, by = c("model_id", by))
@@ -190,7 +193,8 @@ get_scores_for_output_type <- function(
   eval_set_name,
   by,
   output_type,
-  transform
+  transform,
+  task_groups_w_target
 ) {
   metrics <- metric_name_to_output_type$metric[
     metric_name_to_output_type$output_type == output_type
@@ -219,6 +223,20 @@ get_scores_for_output_type <- function(
     baseline = baseline,
     by = score_by
   )
+  # Ordinal pmf with a metric that requires ordinal dispatch (e.g. rps): pass
+  # the ordered level vector so scoringutils dispatches as forecast_ordinal
+  # rather than forecast_nominal. log_score works under either dispatch with
+  # identical results, so we skip the lookup when only log_score is requested.
+  if (
+    output_type == "pmf" &&
+      is_target_ordinal(task_groups_w_target) &&
+      any(metrics %in% ordinal_only_pmf_metrics()) # nolint: object_usage
+  ) {
+    score_args$output_type_id_order <- get_output_type_ids_for_type(
+      task_groups_w_target,
+      "pmf"
+    )
+  }
   if (apply_transform) {
     score_args$transform <- get_transform_function(transform$fun)
     score_args$transform_append <- transform_append

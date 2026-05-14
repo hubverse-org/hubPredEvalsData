@@ -155,45 +155,47 @@ test_that("is_target_ordinal works", {
 })
 
 
-test_that("get_output_type_ids_for_type works", {
-  # all is well
-  task_groups <- list(
+#' Build a task_groups list with the v4+ output_type_id wrapper shape
+#' (`{required: [...]}`) that `get_output_type_ids_for_type()` reads. Each
+#' `...` arg is a named list `output_type = c(values)` per group.
+make_task_groups <- function(...) {
+  lapply(list(...), function(group) {
     list(
-      output_type = list(
-        "quantile" = list(
-          output_type_id = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
-        ),
-        "pmf" = list(output_type_id = c("low", "medium", "high"))
-      )
+      output_type = lapply(group, function(values) {
+        list(output_type_id = list(required = values))
+      })
+    )
+  })
+}
+
+
+test_that("get_output_type_ids_for_type works", {
+  task_groups <- make_task_groups(
+    list(
+      quantile = c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
+      pmf = c("low", "medium", "high")
     ),
     list(
-      output_type = list(
-        "quantile" = list(output_type_id = c(0.1, 0.5, 0.9)),
-        "pmf" = list(output_type_id = c("low", "medium", "high"))
-      )
+      quantile = c(0.1, 0.5, 0.9),
+      pmf = c("low", "medium", "high")
     )
   )
   expect_equal(
     get_output_type_ids_for_type(task_groups, "quantile"),
     c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
   )
+  expect_equal(
+    get_output_type_ids_for_type(task_groups, "pmf"),
+    c("low", "medium", "high")
+  )
 
   # incompatible values: expect an error
-  task_groups <- list(
+  task_groups <- make_task_groups(
     list(
-      output_type = list(
-        "quantile" = list(
-          output_type_id = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)
-        ),
-        "pmf" = list(output_type_id = c("low", "medium", "high"))
-      )
+      quantile = c(0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8),
+      pmf = c("low", "medium", "high")
     ),
-    list(
-      output_type = list(
-        "quantile" = list(output_type_id = c(0.1, 0.5, 0.9)),
-        "pmf" = list(output_type_id = c("low", "medium", "high"))
-      )
-    )
+    list(quantile = c(0.1, 0.5, 0.9), pmf = c("low", "medium", "high"))
   )
   expect_error(
     get_output_type_ids_for_type(task_groups, "quantile"),
@@ -201,19 +203,12 @@ test_that("get_output_type_ids_for_type works", {
   )
 
   # incompatible value order: expect an error
-  task_groups <- list(
+  task_groups <- make_task_groups(
     list(
-      output_type = list(
-        "quantile" = list(output_type_id = c(0.9, 0.1, 0.5)),
-        "pmf" = list(output_type_id = c("low", "medium", "high"))
-      )
+      quantile = c(0.9, 0.1, 0.5),
+      pmf = c("low", "medium", "high")
     ),
-    list(
-      output_type = list(
-        "quantile" = list(output_type_id = c(0.1, 0.5, 0.9)),
-        "pmf" = list(output_type_id = c("low", "medium", "high"))
-      )
-    )
+    list(quantile = c(0.1, 0.5, 0.9), pmf = c("low", "medium", "high"))
   )
   expect_error(
     get_output_type_ids_for_type(task_groups, "quantile"),

@@ -19,7 +19,6 @@ targets:
 - target_id: wk flu hosp rate category
   metrics:
   - log_score
-  - rps
   disaggregate_by:
   - location
   - reference_date

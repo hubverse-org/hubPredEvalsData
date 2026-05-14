@@ -96,16 +96,22 @@ is_target_ordinal <- function(task_groups_w_target) {
 }
 
 
-#' Get the output type id values for a given output type. The output type may
-#' appear in multiple task groups, and the output type id values in those groups
-#' may differ as long as there is one group that has all of the output type id
-#' values.
+#' Get the output type id values for a given output type, in the order they
+#' appear in the hub's tasks.json. The output type may appear in multiple task
+#' groups, and the output type id values in those groups may differ as long as
+#' there is one group that has all of the output type id values.
+#'
+#' Reads `output_type_id$required` only. In v4+ tasks-schemas that is the
+#' entire array; in v2/v3 there is also an `$optional` array, but for ordinal
+#' pmf use cases (where this is wired in) `validate_ordinal_pmf_dispatch()`
+#' has already warned (or errored) at config-validation time, so by the time
+#' we get here ignoring `$optional` is the agreed behaviour.
 #' @noRd
 get_output_type_ids_for_type <- function(task_groups, output_type) {
   output_type_ids_by_group <- purrr::map(
     task_groups,
     function(task_group) {
-      task_group$output_type[[output_type]]$output_type_id
+      task_group$output_type[[output_type]]$output_type_id$required
     }
   )
 
