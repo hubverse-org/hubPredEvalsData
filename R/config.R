@@ -502,10 +502,9 @@ validate_ordinal_pmf_dispatch <- function(
 
   for (target in predevals_config$targets) {
     target_id <- target$target_id
+    # validate_config_targets() runs earlier in validate_config_vs_hub_tasks()
+    # and errors on any target_id not in the hub, so this always finds a match.
     task_groups_w_target <- filter_task_groups_to_target(task_groups, target_id)
-    if (length(task_groups_w_target) == 0) {
-      next # validate_config_targets already errored on this
-    }
     if (!is_target_ordinal(task_groups_w_target)) {
       next
     }
