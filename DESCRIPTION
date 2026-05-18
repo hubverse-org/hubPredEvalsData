@@ -17,13 +17,9 @@ Imports:
     jsonvalidate,
     purrr,
     rlang,
-    scoringutils (>= 2.0.0.9000),
+    scoringutils (>= 2.2.0),
     yaml
-Remotes:
-    hubverse-org/hubData,
-    hubverse-org/hubEvals,
-    hubverse-org/hubUtils,
-    epiforecasts/scoringutils
+Additional_repositories: https://hubverse-org.r-universe.dev
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
