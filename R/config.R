@@ -527,9 +527,9 @@ validate_ordinal_pmf_dispatch <- function(
              target {.val {target_id}} under tasks-schema {.val {schema_version}}."
           ),
           "x" = cli::format_inline(
-            "{.field output_type_id$optional} for pmf is non-empty
-             ({.val {unique(optional_levels)}}); reading {.field $required}
-             alone would silently drop these levels."
+            "A definitive ordinal level order cannot be determined when
+             {.field output_type_id$optional} is non-empty
+             ({.val {unique(optional_levels)}})."
           ),
           "i" = paste0(
             "Bump the hub's tasks-schema to v4.0.0+ (where pmf output_type_id ",

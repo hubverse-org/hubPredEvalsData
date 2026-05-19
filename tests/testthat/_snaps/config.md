@@ -1743,6 +1743,6 @@
 
     Error in predevals config file:
     Cannot score "rps" on ordinal pmf target "hosp rate category" under tasks-schema "v3.0.0".
-    x output_type_id$optional for pmf is non-empty ("very high"); reading $required alone would silently drop these levels.
+    x A definitive ordinal level order cannot be determined when output_type_id$optional is non-empty ("very high").
     i Bump the hub's tasks-schema to v4.0.0+ (where pmf output_type_id is a single `required` array) to disambiguate ordinal level order.
 

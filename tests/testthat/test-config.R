@@ -483,8 +483,8 @@ test_that("read_predevals_config is silent for ordinal pmf with no ordinal-only 
 
 
 test_that("read_predevals_config errors when pre-v4 ordinal pmf has non-empty $optional", {
-  # When a v3 hub puts pmf levels in `$optional`, reading `$required` alone
-  # at scoring time would silently drop them. The validator must refuse.
+  # When a v3 hub puts pmf levels in `$optional`, a definitive ordinal level
+  # order cannot be determined. The validator must refuse.
   # Snapshot the full error text so the exact wording is locked down.
   hub_path <- withr::local_tempdir()
   setup_ordinal_pmf_hub(
