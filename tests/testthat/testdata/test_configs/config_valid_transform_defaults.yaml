@@ -19,7 +19,6 @@ targets:
 - target_id: wk flu hosp rate category
   metrics:
   - log_score
-  - rps
   transform: false
   disaggregate_by:
   - location
@@ -29,8 +28,8 @@ targets:
 eval_sets:
 - eval_set_name: Full season
   round_filters:
-    min: '2023-01-21'
+    min: '2022-10-22'
 - eval_set_name: Last 4 weeks
   round_filters:
-    min: '2023-01-21'
+    min: '2022-10-22'
     n_last: 4
