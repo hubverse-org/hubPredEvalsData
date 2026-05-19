@@ -47,6 +47,13 @@
 <code>scores.csv</code> is now emitted in wide format, with transformed-scale metrics as <code>&lt;metric&gt;__&lt;label&gt;</code>-suffixed columns (e.g. <code>wis__log</code>). Setting <code>append: false</code> emits only the suffixed columns.</li>
 <li>Existing v1.0.1 configs continue to validate against v1.1.0 without changes.</li>
 </ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li>
+<code><a href="../reference/generate_eval_data.html">generate_eval_data()</a></code> no longer fails on ordinal pmf targets that request <code>rps</code>. The ordinal level order is now read from the hub’s <code>tasks.json</code> and forwarded to <code><a href="https://hubverse-org.github.io/hubEvals/reference/score_model_out.html" class="external-link">hubEvals::score_model_out()</a></code> so scoringutils dispatches the data as ordinal (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/48" class="external-link">#48</a>).</li>
+<li>
+<code><a href="../reference/read_predevals_config.html">read_predevals_config()</a></code> now warns when an ordinal-only pmf metric (e.g. <code>rps</code>) is requested against a pre-v4 tasks-schema (where <code>output_type_id</code> is split across <code>required</code>/<code>optional</code>), and errors if the hub’s pmf <code>output_type_id$optional</code> is non-empty (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/48" class="external-link">#48</a>).</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.0.0" id="hubpredevalsdata-100">hubPredEvalsData 1.0.0<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-100"></a></h2>

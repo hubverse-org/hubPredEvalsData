@@ -21,6 +21,21 @@
 - Existing v1.0.1 configs continue to validate against v1.1.0 without
   changes.
 
+### Bug Fixes
+
+- [`generate_eval_data()`](https://hubverse-org.github.io/hubPredEvalsData/dev/reference/generate_eval_data.md)
+  no longer fails on ordinal pmf targets that request `rps`. The ordinal
+  level order is now read from the hub’s `tasks.json` and forwarded to
+  [`hubEvals::score_model_out()`](https://hubverse-org.github.io/hubEvals/reference/score_model_out.html)
+  so scoringutils dispatches the data as ordinal
+  ([\#48](https://github.com/hubverse-org/hubPredEvalsData/issues/48)).
+- [`read_predevals_config()`](https://hubverse-org.github.io/hubPredEvalsData/dev/reference/read_predevals_config.md)
+  now warns when an ordinal-only pmf metric (e.g. `rps`) is requested
+  against a pre-v4 tasks-schema (where `output_type_id` is split across
+  `required`/`optional`), and errors if the hub’s pmf
+  `output_type_id$optional` is non-empty
+  ([\#48](https://github.com/hubverse-org/hubPredEvalsData/issues/48)).
+
 ## hubPredEvalsData 1.0.0
 
 This is a **breaking change** release that adds support for hubs with
