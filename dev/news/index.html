@@ -42,6 +42,9 @@
 <code>targets[*].transform</code> — per-target transform that overrides <code>transform_defaults</code>, or the literal <code>false</code> to opt a target out.</li>
 <li>Supported transform functions: <code>log_shift</code>, <code>sqrt</code>, <code>log1p</code>, <code>log</code>, <code>log10</code>, <code>log2</code>.</li>
 </ul></li>
+<li>Configured transforms are now applied during scoring (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/40" class="external-link">#40</a>).</li>
+<li>
+<code>scores.csv</code> is now emitted in wide format, with transformed-scale metrics as <code>&lt;metric&gt;__&lt;label&gt;</code>-suffixed columns (e.g. <code>wis__log</code>). Setting <code>append: false</code> emits only the suffixed columns.</li>
 <li>Existing v1.0.1 configs continue to validate against v1.1.0 without changes.</li>
 </ul></div>
 </div>
