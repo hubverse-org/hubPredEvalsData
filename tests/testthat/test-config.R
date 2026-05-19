@@ -457,3 +457,42 @@ test_that("read_predevals_config warns, transform_defaults inherited by pmf-only
     regexp = 'Inherited transform_defaults cannot apply to target "wk flu hosp rate category"'
   )
 })
+
+
+test_that("read_predevals_config warns on ordinal pmf rps under pre-v4 schema", {
+  # A v3 hub wraps pmf output_type_id as {required, optional}; scoring reads
+  # $required only, which is correct for pmf in practice but warrants a
+  # warning until the hub bumps to v4+. Snapshot the full warning text so the
+  # exact wording is locked down.
+  hub_path <- withr::local_tempdir()
+  setup_ordinal_pmf_hub(hub_path, schema_version = "v3.0.0", incl_data = FALSE)
+  config_path <- write_ordinal_pmf_config(hub_path)
+  expect_snapshot_warning(read_predevals_config(hub_path, config_path))
+})
+
+
+test_that("read_predevals_config is silent for ordinal pmf with no ordinal-only metric on pre-v4 schema", {
+  # Same v3 hub, same ordinal pmf target, but only log_score (which works
+  # under both nominal and ordinal dispatch) is requested. No level ordering
+  # is needed, so the validator should stay quiet.
+  hub_path <- withr::local_tempdir()
+  setup_ordinal_pmf_hub(hub_path, schema_version = "v3.0.0", incl_data = FALSE)
+  config_path <- write_ordinal_pmf_config(hub_path, metrics = "log_score")
+  expect_no_warning(read_predevals_config(hub_path, config_path))
+})
+
+
+test_that("read_predevals_config errors when pre-v4 ordinal pmf has non-empty $optional", {
+  # When a v3 hub puts pmf levels in `$optional`, a definitive ordinal level
+  # order cannot be determined. The validator must refuse.
+  # Snapshot the full error text so the exact wording is locked down.
+  hub_path <- withr::local_tempdir()
+  setup_ordinal_pmf_hub(
+    hub_path,
+    schema_version = "v3.0.0",
+    include_optional = TRUE,
+    incl_data = FALSE
+  )
+  config_path <- write_ordinal_pmf_config(hub_path)
+  expect_snapshot_error(read_predevals_config(hub_path, config_path))
+})
