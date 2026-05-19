@@ -457,3 +457,32 @@ test_that("read_predevals_config warns, transform_defaults inherited by pmf-only
     regexp = 'Inherited transform_defaults cannot apply to target "wk flu hosp rate category"'
   )
 })
+
+test_that("read_predevals_config succeeds, valid initial_sort_column", {
+  hub_path <- test_path("testdata", "ecfh")
+  expect_no_error(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_valid_initial_sort_column.yaml"
+      )
+    )
+  )
+})
+
+test_that("read_predevals_config fails, invalid initial_sort_column", {
+  hub_path <- test_path("testdata", "ecfh")
+  expect_error(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_invalid_initial_sort_column.yaml"
+      )
+    ),
+    regexp = 'Invalid `initial_sort_column` value "not_a_column"'
+  )
+})

@@ -199,6 +199,9 @@ validate_config_vs_hub_tasks <- function(hub_path, predevals_config) {
 
   # checks for task_id_text
   validate_config_task_id_text(predevals_config, task_groups, task_id_names)
+
+  # checks for initial_sort_column
+  validate_config_initial_sort_column(predevals_config)
 }
 
 
@@ -594,6 +597,50 @@ validate_config_task_id_text <- function(
         )
       )
     }
+  }
+}
+
+
+#' Validate the initial_sort_column in a predevals config object.
+#' Checks that the value, if specified, is one of the columns that appear in
+#' the output scores table for at least one target.
+#' @noRd
+validate_config_initial_sort_column <- function(predevals_config) {
+  initial_sort_column <- predevals_config$initial_sort_column
+  if (is.null(initial_sort_column)) {
+    return()
+  }
+
+  valid_columns <- c("model_id", "n")
+  for (target in predevals_config$targets) {
+    metrics <- target$metrics
+    valid_columns <- c(valid_columns, metrics)
+    if (!is.null(target$relative_metrics)) {
+      valid_columns <- c(
+        valid_columns,
+        paste0(target$relative_metrics, "_scaled_relative_skill")
+      )
+    }
+    if (!is.null(target$disaggregate_by)) {
+      valid_columns <- c(valid_columns, target$disaggregate_by)
+    }
+  }
+  valid_columns <- unique(valid_columns)
+
+  if (!initial_sort_column %in% valid_columns) {
+    raise_config_error(
+      c(
+        cli::format_inline(
+          "Invalid `initial_sort_column` value {.val {initial_sort_column}}."
+        ),
+        "i" = cli::format_inline(
+          "Must be one of the output scores table columns."
+        ),
+        "x" = cli::format_inline(
+          "Valid columns: {.val {valid_columns}}."
+        )
+      )
+    )
   }
 }
 
