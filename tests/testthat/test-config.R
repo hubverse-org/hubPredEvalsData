@@ -486,3 +486,48 @@ test_that("read_predevals_config fails, invalid initial_sort_column", {
     regexp = 'Invalid `initial_sort_column` value "not_a_column"'
   )
 })
+
+test_that("read_predevals_config succeeds, initial_sort_column is scaled relative skill column", {
+  hub_path <- test_path("testdata", "ecfh")
+  expect_no_error(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_valid_initial_sort_column_scaled_rel.yaml"
+      )
+    )
+  )
+})
+
+test_that("read_predevals_config succeeds, initial_sort_column is disaggregate_by column", {
+  hub_path <- test_path("testdata", "ecfh")
+  expect_no_error(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_valid_initial_sort_column_disaggregate_by.yaml"
+      )
+    )
+  )
+})
+
+test_that("read_predevals_config succeeds, initial_sort_column valid for one target but not all", {
+  # ae_median is only present in wk inc flu hosp, not wk flu hosp rate category.
+  # Validation uses a union of columns across targets; predevals handles the
+  # missing column gracefully at render time.
+  hub_path <- test_path("testdata", "ecfh")
+  expect_no_error(
+    read_predevals_config(
+      hub_path,
+      test_path(
+        "testdata",
+        "test_configs",
+        "config_valid_initial_sort_column_cross_target.yaml"
+      )
+    )
+  )
+})

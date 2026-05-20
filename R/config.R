@@ -603,7 +603,10 @@ validate_config_task_id_text <- function(
 
 #' Validate the initial_sort_column in a predevals config object.
 #' Checks that the value, if specified, is one of the columns that appear in
-#' the output scores table for at least one target.
+#' the output scores table for at least one target. Valid columns are the union
+#' across all targets (not the intersection), because the downstream predevals
+#' app handles a missing sort column at render time and falls back gracefully
+#' when a configured column is absent from a particular target's scores table.
 #' @noRd
 validate_config_initial_sort_column <- function(predevals_config) {
   initial_sort_column <- predevals_config$initial_sort_column

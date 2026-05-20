@@ -173,7 +173,7 @@
             "minimum": 0
         },
         "initial_sort_column": {
-            "description": "Optional column name to use as the initial sort column in the predevals scores table. Must be one of the columns in the output scores table (e.g. \"model_id\", \"wis\", \"n\").",
+            "description": "Optional column name to use as the initial sort column in the predevals scores table. Must be one of the columns in the output scores table (e.g. \"model_id\", \"wis\", \"n\"). Relative skill metrics appear as \"<metric>_scaled_relative_skill\" (e.g. \"wis_scaled_relative_skill\").",
             "type": "string",
             "minLength": 1
         }
