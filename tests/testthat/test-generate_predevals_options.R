@@ -9,17 +9,21 @@ get_target <- function(opts, target_id) {
 # artifact rather than the in-memory R structure.
 expect_matches_options_fixture <- function(config_name, fixture_name) {
   opts <- generate_predevals_options(
-    hub_path = test_path("testdata", "ecfh"),
-    config_path = test_path("testdata", "test_configs", config_name)
+    hub_path = testthat::test_path("testdata", "ecfh"),
+    config_path = testthat::test_path(
+      "testdata",
+      "test_configs",
+      config_name
+    )
   )
   actual <- jsonlite::fromJSON(
     jsonlite::toJSON(opts, auto_unbox = TRUE),
     simplifyVector = FALSE
   )
   expected <- jsonlite::read_json(
-    test_path("testdata", "expected-predevals-options", fixture_name)
+    testthat::test_path("testdata", "expected-predevals-options", fixture_name)
   )
-  expect_equal(actual, expected)
+  testthat::expect_equal(actual, expected)
 }
 
 
