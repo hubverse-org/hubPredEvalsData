@@ -54,6 +54,66 @@ ordinal_only_pmf_metrics <- function() {
 }
 
 
+#' Expand a metric vector with relative-skill entries.
+#'
+#' For each metric also listed in `relative_metrics`, splice a
+#' `<metric>_scaled_relative_skill` entry in directly before it. This is the
+#' single source of truth for the metric ordering shared by the `scores.csv`
+#' columns (`order_relative_metric_cols()`) and the `predevals-options.json`
+#' metric list (`generate_predevals_options()`).
+#'
+#' @param metrics Character vector of requested metric names.
+#' @param relative_metrics Character vector of metrics that also get a scaled
+#'   relative-skill column, or `NULL`.
+#' @return `metrics` with relative-skill entries spliced in.
+#' @noRd
+expand_relative_skill_metrics <- function(metrics, relative_metrics) {
+  purrr::map(metrics, function(metric) {
+    if (metric %in% relative_metrics) {
+      c(paste0(metric, "_scaled_relative_skill"), metric)
+    } else {
+      metric
+    }
+  }) |>
+    unlist()
+}
+
+
+#' Expand a metric vector with transformed-scale entries.
+#'
+#' Composed after `expand_relative_skill_metrics()` to give the full metric
+#' column order. For each entry whose base metric is transformable, the
+#' transformed-scale name `<entry>__<label>` is placed directly after it when
+#' `append` is `TRUE`, or replaces it when `append` is `FALSE` (matching
+#' `generate_eval_data()`, which drops the natural scale then). The base metric
+#' of a `<metric>_scaled_relative_skill` entry determines transformability.
+#'
+#' @param expanded_metrics Character vector from `expand_relative_skill_metrics()`.
+#' @param transformable_metrics Character vector of base metric names on a
+#'   transformable output type.
+#' @param label Transform label, used as the `__<label>` column suffix.
+#' @param append If `TRUE`, transformed entries are interleaved alongside the
+#'   natural-scale entries; if `FALSE`, they replace them.
+#' @return `expanded_metrics` with transformed-scale entries interleaved.
+#' @noRd
+expand_transformed_metrics <- function(
+  expanded_metrics,
+  transformable_metrics,
+  label,
+  append
+) {
+  base_metrics <- sub("_scaled_relative_skill$", "", expanded_metrics)
+  purrr::map2(expanded_metrics, base_metrics, function(metric, base) {
+    if (!base %in% transformable_metrics) {
+      return(metric)
+    }
+    transformed <- paste0(metric, "__", label)
+    if (append) c(metric, transformed) else transformed
+  }) |>
+    unlist()
+}
+
+
 #' Get the standard metrics that are supported for a given output type
 #' @noRd
 get_standard_metrics <- function(output_type, target_is_ordinal) {

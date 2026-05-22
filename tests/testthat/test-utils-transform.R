@@ -14,7 +14,7 @@ test_that("get_transform_function returns the allowlisted function for each name
   for (name in names(.transform_functions)) {
     expect_identical(
       get_transform_function(name),
-      .transform_functions[[name]]
+      .transform_functions[[name]]$fn
     )
   }
 })
@@ -23,6 +23,27 @@ test_that("get_transform_function errors on an unknown name", {
   expect_error(
     get_transform_function("not_a_function"),
     regexp = 'Unknown transform function "not_a_function"'
+  )
+})
+
+test_that("get_transform_description appends configured args", {
+  expect_identical(
+    get_transform_description(list(fun = "log_shift", args = list(offset = 1))),
+    "Natural logarithm after adding an offset to the values (offset = 1)."
+  )
+})
+
+test_that("get_transform_description surfaces default args when none are configured", {
+  expect_identical(
+    get_transform_description(list(fun = "log_shift")),
+    "Natural logarithm after adding an offset to the values (offset = 0)."
+  )
+})
+
+test_that("get_transform_description has no args clause for an argument-free function", {
+  expect_identical(
+    get_transform_description(list(fun = "sqrt")),
+    "Square root."
   )
 })
 

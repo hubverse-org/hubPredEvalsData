@@ -1,0 +1,29 @@
+{
+  "schema_version": "https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.1.0/config_schema.json",
+  "rounds_idx": 0,
+  "targets": [
+    {
+      "target_id": "wk inc flu hosp",
+      "metrics": ["wis", "wis__log", "ae_median", "ae_median__log", "interval_coverage_50", "interval_coverage_50__log", "interval_coverage_95", "interval_coverage_95__log"],
+      "disaggregate_by": ["location", "reference_date", "horizon", "target_end_date"],
+      "transform": {
+        "fun": "log_shift",
+        "label": "log",
+        "append": true,
+        "description": "Natural logarithm after adding an offset to the values (offset = 1)."
+      }
+    },
+    {
+      "target_id": "wk flu hosp rate category",
+      "metrics": "log_score"
+    }
+  ],
+  "eval_sets": [
+    {
+      "eval_set_name": "Full season",
+      "round_filters": {
+        "min": "2022-10-22"
+      }
+    }
+  ]
+}
