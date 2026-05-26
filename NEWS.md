@@ -10,6 +10,7 @@
 * `scores.csv` is now emitted in wide format, with transformed-scale metrics as `<metric>__<label>`-suffixed columns (e.g. `wis__log`). Setting `append: false` emits only the suffixed columns.
 * Existing v1.0.1 configs continue to validate against v1.1.0 without changes.
 * Added `generate_predevals_options()`, which assembles the contents of the `predevals-options.json` file used to initialise the predevals dashboard. It returns the validated config with each target's `metrics` expanded to the columns present in `scores.csv` (relative-skill metrics, plus transformed-scale `<metric>__<label>` metrics when a transform applies) and a resolved `transform` block attached (#41, closes #4).
+* `generate_eval_data()` now discovers oracle output from `hub_path` via `hubData::connect_target_oracle_output()` when `oracle_output` is not supplied; the argument remains supported for back-compat (#51).
 
 ## Bug Fixes
 

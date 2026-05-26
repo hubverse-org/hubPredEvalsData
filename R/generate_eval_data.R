@@ -7,7 +7,11 @@
 #' @param config_path A path to a yaml file that specifies the configuration
 #' options for the evaluation.
 #' @param out_path The directory to write the evaluation data to.
-#' @param oracle_output A data frame of oracle output to use for the evaluation.
+#' @param oracle_output Optional data frame of oracle output to use for the
+#' evaluation. When `NULL` (the default), oracle output is discovered from
+#' `hub_path` via [hubData::connect_target_oracle_output()]. Supplying a
+#' pre-loaded data frame remains supported for back-compat with callers
+#' that load oracle data themselves.
 #'
 #' @section Output:
 #' For each `(target, eval_set, disaggregation)` requested in the config, a
@@ -24,8 +28,17 @@
 #' `system.file("schema", package = "hubPredEvalsData")`.
 #'
 #' @export
-generate_eval_data <- function(hub_path, config_path, out_path, oracle_output) {
+generate_eval_data <- function(
+  hub_path,
+  config_path,
+  out_path,
+  oracle_output = NULL
+) {
   config <- read_predevals_config(hub_path, config_path)
+  if (is.null(oracle_output)) {
+    oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+      dplyr::collect()
+  }
   for (target in config$targets) {
     generate_target_eval_data(hub_path, config, out_path, oracle_output, target)
   }
