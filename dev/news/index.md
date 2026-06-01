@@ -31,6 +31,12 @@
   ([\#41](https://github.com/hubverse-org/hubPredEvalsData/issues/41),
   closes
   [\#4](https://github.com/hubverse-org/hubPredEvalsData/issues/4)).
+- [`generate_eval_data()`](https://hubverse-org.github.io/hubPredEvalsData/dev/reference/generate_eval_data.md)
+  now discovers oracle output from `hub_path` via
+  [`hubData::connect_target_oracle_output()`](https://hubverse-org.github.io/hubData/reference/connect_target_oracle_output.html)
+  when `oracle_output` is not supplied; the argument remains supported
+  for back-compat
+  ([\#51](https://github.com/hubverse-org/hubPredEvalsData/issues/51)).
 
 ### Bug Fixes
 
