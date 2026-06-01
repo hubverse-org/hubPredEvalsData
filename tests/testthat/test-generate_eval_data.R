@@ -3,12 +3,8 @@ test_that("generate_eval_data works, integration test, no relative metrics", {
   hub_path <- test_path("testdata", "ecfh")
   model_out_tbl <- hubData::connect_hub(hub_path) |>
     dplyr::collect()
-  oracle_output <- read.csv(
-    test_path("testdata", "ecfh", "target-data", "oracle-output.csv")
-  )
-  oracle_output[["target_end_date"]] <- as.Date(oracle_output[[
-    "target_end_date"
-  ]])
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
 
   generate_eval_data(
     hub_path = hub_path,
@@ -17,8 +13,7 @@ test_that("generate_eval_data works, integration test, no relative metrics", {
       "test_configs",
       "config_valid_mean_median_quantile.yaml"
     ),
-    out_path = out_path,
-    oracle_output = oracle_output
+    out_path = out_path
   )
 
   check_exp_scores_for_set(
@@ -46,12 +41,8 @@ test_that("generate_eval_data works, integration test, with relative metrics", {
   hub_path <- test_path("testdata", "ecfh")
   model_out_tbl <- hubData::connect_hub(hub_path) |>
     dplyr::collect()
-  oracle_output <- read.csv(
-    test_path("testdata", "ecfh", "target-data", "oracle-output.csv")
-  )
-  oracle_output[["target_end_date"]] <- as.Date(oracle_output[[
-    "target_end_date"
-  ]])
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
 
   generate_eval_data(
     hub_path = hub_path,
@@ -60,8 +51,7 @@ test_that("generate_eval_data works, integration test, with relative metrics", {
       "test_configs",
       "config_valid_mean_median_quantile_rel.yaml"
     ),
-    out_path = out_path,
-    oracle_output = oracle_output
+    out_path = out_path
   )
 
   check_exp_scores_for_set(
@@ -87,13 +77,53 @@ test_that("generate_eval_data works, integration test, with relative metrics", {
   )
 })
 
+
+test_that("supplying oracle_output produces output identical to internal discovery", {
+  # Back-compat lock-in: callers (e.g. docker images pinned to older script
+  # versions) that pre-load oracle output and pass it in must produce the
+  # exact same scores files as the default internal-discovery path. Also
+  # useful for tests that want to inject a tailored frame.
+  hub_path <- test_path("testdata", "ecfh")
+  config_path <- test_path(
+    "testdata",
+    "test_configs",
+    "config_valid_mean_median_quantile_rel.yaml"
+  )
+  out_supplied <- withr::local_tempdir()
+  out_discovered <- withr::local_tempdir()
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
+
+  generate_eval_data(
+    hub_path = hub_path,
+    config_path = config_path,
+    out_path = out_supplied,
+    oracle_output = oracle_output
+  )
+  generate_eval_data(
+    hub_path = hub_path,
+    config_path = config_path,
+    out_path = out_discovered
+  )
+
+  files_supplied <- sort(list.files(out_supplied, recursive = TRUE))
+  files_discovered <- sort(list.files(out_discovered, recursive = TRUE))
+  expect_identical(files_supplied, files_discovered)
+  for (f in files_supplied) {
+    expect_identical(
+      read.csv(file.path(out_supplied, f)),
+      read.csv(file.path(out_discovered, f)),
+      info = f
+    )
+  }
+})
+
+
 test_that("generate_eval_data resolves and applies per-target transforms independently across targets", {
   hub_path <- withr::local_tempdir()
   out_path <- withr::local_tempdir()
   config_path <- file.path(hub_path, "predevals-config.yaml")
   setup_two_target_hub(hub_path)
-  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
-    dplyr::collect()
 
   yaml::write_yaml(
     list(
@@ -132,8 +162,7 @@ test_that("generate_eval_data resolves and applies per-target transforms indepen
   generate_eval_data(
     hub_path = hub_path,
     config_path = config_path,
-    out_path = out_path,
-    oracle_output = oracle_output
+    out_path = out_path
   )
 
   scores_log <- read.csv(
@@ -185,8 +214,7 @@ test_that("generate_eval_data forwards transform args to score_model_out (log_sh
         "test_configs",
         "config_valid_transform_per_target.yaml"
       ),
-      out_path = out_path,
-      oracle_output = oracle_output
+      out_path = out_path
     ),
     message = "Detected zeros"
   )
@@ -202,8 +230,6 @@ test_that("generate_eval_data forwards transform args to score_model_out (log_sh
 test_that("generate_eval_data applies per-target transform with append=TRUE", {
   out_path <- withr::local_tempdir()
   hub_path <- test_path("testdata", "ecfh")
-  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
-    dplyr::collect()
 
   generate_eval_data(
     hub_path = hub_path,
@@ -212,8 +238,7 @@ test_that("generate_eval_data applies per-target transform with append=TRUE", {
       "test_configs",
       "config_valid_transform_per_target.yaml"
     ),
-    out_path = out_path,
-    oracle_output = oracle_output
+    out_path = out_path
   )
 
   natural_metrics <- c(
@@ -306,15 +331,11 @@ test_that("generate_eval_data scores rps on ordinal pmf targets (#48)", {
   setup_ordinal_pmf_hub(hub_path)
   config_path <- write_ordinal_pmf_config(hub_path)
 
-  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
-    dplyr::collect()
-
   expect_no_error(
     generate_eval_data(
       hub_path = hub_path,
       config_path = config_path,
-      out_path = out_path,
-      oracle_output = oracle_output
+      out_path = out_path
     )
   )
 
@@ -338,8 +359,6 @@ test_that("generate_eval_data scores rps on ordinal pmf targets (#48)", {
 test_that("generate_eval_data applies transform_defaults to inheriting targets and skips opt-out targets", {
   out_path <- withr::local_tempdir()
   hub_path <- test_path("testdata", "ecfh")
-  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
-    dplyr::collect()
 
   # The opted-out target ("wk flu hosp rate category") is pmf-only, so it
   # could not be transformed even if it tried. Without `transform: false`,
@@ -355,8 +374,7 @@ test_that("generate_eval_data applies transform_defaults to inheriting targets a
         "test_configs",
         "config_valid_transform_defaults.yaml"
       ),
-      out_path = out_path,
-      oracle_output = oracle_output
+      out_path = out_path
     )
   )
 
@@ -384,8 +402,6 @@ test_that("generate_eval_data applies transform_defaults to inheriting targets a
 test_that("generate_eval_data with transform append=FALSE emits only transformed-scale columns", {
   out_path <- withr::local_tempdir()
   hub_path <- test_path("testdata", "ecfh")
-  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
-    dplyr::collect()
 
   generate_eval_data(
     hub_path = hub_path,
@@ -394,8 +410,7 @@ test_that("generate_eval_data with transform append=FALSE emits only transformed
       "test_configs",
       "config_valid_transform_no_append.yaml"
     ),
-    out_path = out_path,
-    oracle_output = oracle_output
+    out_path = out_path
   )
 
   scores <- read.csv(
@@ -420,8 +435,6 @@ test_that("generate_eval_data with transform append=FALSE emits only transformed
 test_that("generate_eval_data scores relative skill on the transformed scale when append=FALSE", {
   out_path <- withr::local_tempdir()
   hub_path <- test_path("testdata", "ecfh")
-  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
-    dplyr::collect()
 
   generate_eval_data(
     hub_path = hub_path,
@@ -430,8 +443,7 @@ test_that("generate_eval_data scores relative skill on the transformed scale whe
       "test_configs",
       "config_valid_transform_no_append_rel.yaml"
     ),
-    out_path = out_path,
-    oracle_output = oracle_output
+    out_path = out_path
   )
 
   scores <- read.csv(
@@ -461,12 +473,8 @@ test_that("generate_eval_data generates an informative message and partial resul
   hub_path <- test_path("testdata", "ecfh")
   model_out_tbl <- hubData::connect_hub(hub_path) |>
     dplyr::collect()
-  oracle_output <- read.csv(
-    test_path("testdata", "ecfh", "target-data", "oracle-output.csv")
-  )
-  oracle_output[["target_end_date"]] <- as.Date(oracle_output[[
-    "target_end_date"
-  ]])
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
 
   expect_message(
     generate_eval_data(
@@ -476,8 +484,7 @@ test_that("generate_eval_data generates an informative message and partial resul
         "test_configs",
         "config_valid_set_filters_no_data.yaml"
       ),
-      out_path = out_path,
-      oracle_output = oracle_output
+      out_path = out_path
     ),
     'No model output data found for target "wk inc flu hosp" in evaluation set "Valid locations with no data in test'
   )
