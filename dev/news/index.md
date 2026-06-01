@@ -20,6 +20,17 @@
   Setting `append: false` emits only the suffixed columns.
 - Existing v1.0.1 configs continue to validate against v1.1.0 without
   changes.
+- Added
+  [`generate_predevals_options()`](https://hubverse-org.github.io/hubPredEvalsData/dev/reference/generate_predevals_options.md),
+  which assembles the contents of the `predevals-options.json` file used
+  to initialise the predevals dashboard. It returns the validated config
+  with each target’s `metrics` expanded to the columns present in
+  `scores.csv` (relative-skill metrics, plus transformed-scale
+  `<metric>__<label>` metrics when a transform applies) and a resolved
+  `transform` block attached
+  ([\#41](https://github.com/hubverse-org/hubPredEvalsData/issues/41),
+  closes
+  [\#4](https://github.com/hubverse-org/hubPredEvalsData/issues/4)).
 
 ### Bug Fixes
 
