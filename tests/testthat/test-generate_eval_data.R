@@ -255,6 +255,27 @@ test_that("generate_eval_data applies per-target transform with append=TRUE", {
     expect_false(any(is.na(scores$wis__log)))
   }
 
+  # Columns are bunched per metric: each metric's natural column is
+  # immediately followed by its transformed-scale column.
+  overall_scores <- read.csv(
+    file.path(out_path, "wk inc flu hosp", "Full season", "scores.csv")
+  )
+  expect_identical(
+    names(overall_scores),
+    c(
+      "model_id",
+      "wis",
+      "wis__log",
+      "ae_median",
+      "ae_median__log",
+      "interval_coverage_50",
+      "interval_coverage_50__log",
+      "interval_coverage_95",
+      "interval_coverage_95__log",
+      "n"
+    )
+  )
+
   # pmf target inherits no transform (no transform_defaults set in this config),
   # so its scores file has no label-suffixed columns.
   pmf_scores <- read.csv(
@@ -393,6 +414,45 @@ test_that("generate_eval_data with transform append=FALSE emits only transformed
     c("wis", "ae_median", "interval_coverage_50", "interval_coverage_95") %in%
       names(scores)
   ))
+})
+
+
+test_that("generate_eval_data scores relative skill on the transformed scale when append=FALSE", {
+  out_path <- withr::local_tempdir()
+  hub_path <- test_path("testdata", "ecfh")
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
+
+  generate_eval_data(
+    hub_path = hub_path,
+    config_path = test_path(
+      "testdata",
+      "test_configs",
+      "config_valid_transform_no_append_rel.yaml"
+    ),
+    out_path = out_path,
+    oracle_output = oracle_output
+  )
+
+  scores <- read.csv(
+    file.path(out_path, "wk inc flu hosp", "Full season", "scores.csv")
+  )
+  # append=FALSE emits only transformed-scale columns, including the
+  # relative-skill columns computed on the transformed scale. Columns are
+  # bunched per metric: scaled relative skill, then the base metric.
+  expect_identical(
+    names(scores),
+    c(
+      "model_id",
+      "wis_scaled_relative_skill__log",
+      "wis__log",
+      "ae_median_scaled_relative_skill__log",
+      "ae_median__log",
+      "interval_coverage_50__log",
+      "interval_coverage_95__log",
+      "n"
+    )
+  )
 })
 
 

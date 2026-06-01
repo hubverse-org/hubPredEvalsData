@@ -87,3 +87,81 @@ test_that("get_metric_name_to_output_type works, ordinal target", {
     )
   )
 })
+
+
+test_that("expand_relative_skill_metrics splices relative-skill entries", {
+  expect_identical(
+    expand_relative_skill_metrics(
+      metrics = c("wis", "ae_median", "interval_coverage_50"),
+      relative_metrics = c("wis", "ae_median")
+    ),
+    c(
+      "wis_scaled_relative_skill",
+      "wis",
+      "ae_median_scaled_relative_skill",
+      "ae_median",
+      "interval_coverage_50"
+    )
+  )
+})
+
+
+test_that("expand_relative_skill_metrics is a no-op with no relative metrics", {
+  expect_identical(
+    expand_relative_skill_metrics(
+      metrics = c("wis", "ae_median"),
+      relative_metrics = NULL
+    ),
+    c("wis", "ae_median")
+  )
+})
+
+
+test_that("expand_transformed_metrics interleaves when append=TRUE", {
+  expect_identical(
+    expand_transformed_metrics(
+      expanded_metrics = c("wis_scaled_relative_skill", "wis", "ae_median"),
+      transformable_metrics = c("wis", "ae_median"),
+      label = "log",
+      append = TRUE
+    ),
+    c(
+      "wis_scaled_relative_skill",
+      "wis_scaled_relative_skill__log",
+      "wis",
+      "wis__log",
+      "ae_median",
+      "ae_median__log"
+    )
+  )
+})
+
+
+test_that("expand_transformed_metrics replaces when append=FALSE", {
+  expect_identical(
+    expand_transformed_metrics(
+      expanded_metrics = c("wis_scaled_relative_skill", "wis", "ae_median"),
+      transformable_metrics = c("wis", "ae_median"),
+      label = "log",
+      append = FALSE
+    ),
+    c(
+      "wis_scaled_relative_skill__log",
+      "wis__log",
+      "ae_median__log"
+    )
+  )
+})
+
+
+test_that("expand_transformed_metrics skips non-transformable metrics", {
+  expect_identical(
+    expand_transformed_metrics(
+      expanded_metrics = c("wis", "log_score"),
+      transformable_metrics = "wis",
+      label = "log",
+      append = TRUE
+    ),
+    c("wis", "wis__log", "log_score")
+  )
+})

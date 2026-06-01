@@ -13,17 +13,45 @@ get_transformable_output_types <- function() {
 
 #' Allowlist of transform functions exposed to predevals configs.
 #'
+#' Each entry pairs the R function (`fn`) with a human-readable `description`
+#' of what it computes (sentence case, no trailing period). An entry may also
+#' carry `default_args`: function defaults worth surfacing in the description
+#' when the config does not set them (e.g. `log_shift` with no `offset` is a
+#' plain log, so the effective `offset` is always shown). The description is
+#' surfaced in the `predevals-options.json` file by
+#' `get_transform_description()`; colocating it here keeps adding a transform
+#' function and its description a single edit.
+#'
 #' Names must match the `fun` enum in
 #' `inst/schema/v*/config_schema.json`. A test in
 #' `test-utils-transform.R` enforces this consistency.
 #' @noRd
 .transform_functions <- list(
-  log_shift = scoringutils::log_shift,
-  sqrt = base::sqrt,
-  log1p = base::log1p,
-  log = base::log,
-  log10 = base::log10,
-  log2 = base::log2
+  log_shift = list(
+    fn = scoringutils::log_shift,
+    description = "Natural logarithm after adding an offset to the values",
+    default_args = list(offset = 0)
+  ),
+  sqrt = list(
+    fn = base::sqrt,
+    description = "Square root"
+  ),
+  log1p = list(
+    fn = base::log1p,
+    description = "Natural logarithm of one plus the value"
+  ),
+  log = list(
+    fn = base::log,
+    description = "Natural logarithm"
+  ),
+  log10 = list(
+    fn = base::log10,
+    description = "Base-10 logarithm"
+  ),
+  log2 = list(
+    fn = base::log2,
+    description = "Base-2 logarithm"
+  )
 )
 
 
@@ -40,7 +68,7 @@ get_transform_function <- function(name) {
   if (!name %in% names(.transform_functions)) {
     cli::cli_abort("Unknown transform function {.val {name}}.")
   }
-  .transform_functions[[name]]
+  .transform_functions[[name]]$fn
 }
 
 
@@ -78,4 +106,35 @@ resolve_target_transform <- function(target, transform_defaults) {
 #' @noRd
 get_transform_label <- function(transform) {
   transform$label %||% transform$fun
+}
+
+
+#' Compose a human-readable description of a transform.
+#'
+#' Combines the static description from `.transform_functions` with the
+#' effective argument values (configured `args` layered over the entry's
+#' `default_args`), yielding a single self-contained sentence for display in
+#' the `predevals-options.json` file (so the dashboard does not need to know
+#' anything about the transform functions).
+#'
+#' @param transform A transform config list (with `fun`, and optional `args`).
+#' @return Character scalar, e.g.
+#'   `"Natural logarithm ... (offset = 1)."`.
+#' @noRd
+get_transform_description <- function(transform) {
+  fn_spec <- .transform_functions[[transform$fun]]
+  args <- utils::modifyList(
+    fn_spec$default_args %||% list(),
+    transform$args %||% list()
+  )
+  if (length(args) == 0L) {
+    return(paste0(fn_spec$description, "."))
+  }
+  arg_text <- paste(
+    names(args),
+    unlist(args),
+    sep = " = ",
+    collapse = ", "
+  )
+  paste0(fn_spec$description, " (", arg_text, ").")
 }

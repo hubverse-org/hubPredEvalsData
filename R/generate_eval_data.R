@@ -259,6 +259,18 @@ get_scores_for_output_type <- function(
       label = transform_label,
       append = transform_append
     )
+    # Reorder so each metric's natural and transformed columns sit together,
+    # matching the `metrics` order in `predevals-options.json`.
+    ordered_metric_cols <- expand_relative_skill_metrics(
+      metrics = metrics,
+      relative_metrics = relative_metrics
+    ) |>
+      expand_transformed_metrics(
+        transformable_metrics = metrics,
+        label = transform_label,
+        append = transform_append
+      )
+    scores <- scores[c("model_id", by, ordered_metric_cols)]
   }
 
   scores
@@ -279,23 +291,13 @@ order_relative_metric_cols <- function(
     return(scores)
   }
 
-  rel_skill_colnames <- paste0(relative_metrics, "_relative_skill")
-  scores <- dplyr::select(scores, !dplyr::all_of(rel_skill_colnames))
+  unscaled_rel_skill_cols <- paste0(relative_metrics, "_relative_skill")
+  scores <- dplyr::select(scores, !dplyr::all_of(unscaled_rel_skill_cols))
 
-  ordered_metric_cols <- purrr::map(
-    metrics,
-    function(metric) {
-      c(
-        if (metric %in% relative_metrics) {
-          paste0(metric, "_scaled_relative_skill")
-        } else {
-          NULL
-        },
-        metric
-      )
-    }
-  ) |>
-    unlist()
+  ordered_metric_cols <- expand_relative_skill_metrics(
+    metrics = metrics,
+    relative_metrics = relative_metrics
+  )
 
   dplyr::select(scores, dplyr::all_of(c(id_cols, ordered_metric_cols)))
 }
