@@ -29,7 +29,9 @@ in wide format, with one row per model per disaggregation key.
 When a target has a configured transform, transformed-scale metrics appear
 as \verb{<metric>__<label>}-suffixed columns (e.g. \code{wis__log}) alongside the
 natural-scale columns. Setting \code{append: false} emits only the suffixed
-columns.
+columns. Transform-invariant metrics (\verb{interval_coverage_<n>} and \code{bias},
+whose values are unchanged by any monotonic transform) always appear only
+under their natural-scale name regardless of \code{append}.
 
 For the full configuration schema, see the JSON Schema files installed
 with the package under

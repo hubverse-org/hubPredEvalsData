@@ -35,8 +35,10 @@ populate its metric selector:
 column order. A \verb{<metric>_scaled_relative_skill} entry is spliced in
 before each metric listed in \code{relative_metrics}. When a transform applies,
 the transformed-scale \verb{<metric>__<label>} columns are appended, or replace
-the natural-scale columns when \code{append: false}. This is the list the
-dashboard iterates to build its metric selector.
+the natural-scale columns when \code{append: false}. Transform-invariant
+metrics (\verb{interval_coverage_<n>}, \code{bias}) are unchanged by any monotonic
+transform and so always appear only under their natural-scale name. This is
+the list the dashboard iterates to build its metric selector.
 \item \code{transform}: the resolved transform for the target (with
 \code{transform_defaults} inheritance applied), as a list with \code{fun}, \code{label},
 \code{append} and a composed human-readable \code{description} the dashboard can

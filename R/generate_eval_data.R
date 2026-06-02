@@ -22,8 +22,8 @@
 #' as `<metric>__<label>`-suffixed columns (e.g. `wis__log`) alongside the
 #' natural-scale columns. Setting `append: false` emits only the suffixed
 #' columns. Transform-invariant metrics (`interval_coverage_<n>` and `bias`,
-#' whose values are unchanged by any monotonic transform) always appear under
-#' their natural-scale name regardless of `append`.
+#' whose values are unchanged by any monotonic transform) always appear only
+#' under their natural-scale name regardless of `append`.
 #'
 #' For the full configuration schema, see the JSON Schema files installed
 #' with the package under
