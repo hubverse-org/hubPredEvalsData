@@ -167,63 +167,77 @@ test_that("expand_transformed_metrics skips non-transformable metrics", {
 })
 
 
-test_that("expand_transformed_metrics keeps interval coverage un-suffixed (append=TRUE)", {
-  # Interval coverage is invariant under monotonic transforms (#63), so the
-  # transformed-scale entry is dropped and only the natural-scale name remains.
+test_that("expand_transformed_metrics keeps transform-invariant metrics un-suffixed (append=TRUE)", {
+  # Interval coverage and bias are invariant under monotonic transforms (#63),
+  # so the transformed-scale entry is dropped and only the natural-scale name
+  # remains.
   expect_identical(
     expand_transformed_metrics(
       expanded_metrics = c(
         "wis",
         "interval_coverage_50",
-        "interval_coverage_95"
+        "interval_coverage_95",
+        "bias"
       ),
       transformable_metrics = c(
         "wis",
         "interval_coverage_50",
-        "interval_coverage_95"
+        "interval_coverage_95",
+        "bias"
       ),
       label = "log",
       append = TRUE
     ),
-    c("wis", "wis__log", "interval_coverage_50", "interval_coverage_95")
+    c(
+      "wis",
+      "wis__log",
+      "interval_coverage_50",
+      "interval_coverage_95",
+      "bias"
+    )
   )
 })
 
 
-test_that("expand_transformed_metrics keeps interval coverage un-suffixed (append=FALSE)", {
+test_that("expand_transformed_metrics keeps transform-invariant metrics un-suffixed (append=FALSE)", {
   # Under append=FALSE the natural scale is normally dropped, but interval
-  # coverage values are identical on both scales, so we keep the metric under
-  # its natural-scale name rather than emit a misleading __<label> suffix (#63).
+  # coverage and bias values are identical on both scales, so we keep these
+  # metrics under their natural-scale name rather than emit a misleading
+  # __<label> suffix (#63).
   expect_identical(
     expand_transformed_metrics(
       expanded_metrics = c(
         "wis",
         "interval_coverage_50",
-        "interval_coverage_95"
+        "interval_coverage_95",
+        "bias"
       ),
       transformable_metrics = c(
         "wis",
         "interval_coverage_50",
-        "interval_coverage_95"
+        "interval_coverage_95",
+        "bias"
       ),
       label = "log",
       append = FALSE
     ),
-    c("wis__log", "interval_coverage_50", "interval_coverage_95")
+    c("wis__log", "interval_coverage_50", "interval_coverage_95", "bias")
   )
 })
 
 
-test_that("is_transform_invariant flags only interval coverage metrics", {
+test_that("is_transform_invariant flags interval coverage and bias only", {
   expect_identical(
     is_transform_invariant(c(
       "interval_coverage_50",
       "interval_coverage_95",
+      "bias",
       "wis",
       "ae_median",
       "log_score",
-      "interval_coverage_deviation"
+      "interval_coverage_deviation",
+      "bias_scaled_relative_skill"
     )),
-    c(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE)
+    c(TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE)
   )
 })

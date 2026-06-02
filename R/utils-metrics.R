@@ -88,9 +88,11 @@ expand_relative_skill_metrics <- function(metrics, relative_metrics) {
 #' `generate_eval_data()`, which drops the natural scale then). The base metric
 #' of a `<metric>_scaled_relative_skill` entry determines transformability.
 #'
-#' Interval coverage metrics are invariant under monotonic transforms (a
-#' quantile is still the same quantile after transformation), so they are
-#' reported on a single, un-suffixed scale regardless of `append`. See #63.
+#' Transform-invariant metrics (interval coverage, bias) report on a single,
+#' un-suffixed scale regardless of `append`: a strictly monotonic transform
+#' preserves quantile ranks and the sign of forecast-vs-observation error,
+#' so the transformed-scale column equals the natural-scale column. See #63
+#' and `is_transform_invariant()`.
 #'
 #' @param expanded_metrics Character vector from `expand_relative_skill_metrics()`.
 #' @param transformable_metrics Character vector of base metric names on a
@@ -120,16 +122,25 @@ expand_transformed_metrics <- function(
 
 #' Identify metrics that are invariant under monotonic scale transforms.
 #'
-#' Interval coverage compares observations against forecast quantiles, so any
-#' monotonic transform of both leaves the coverage indicator unchanged. The
-#' dashboard pipeline uses this to drop redundant transformed-scale interval
-#' coverage columns from `scores.csv` and `predevals-options.json`. See #63.
+#' Two families of metrics are unchanged when forecasts and observations
+#' undergo a strictly monotonic transform:
+#'
+#' - `interval_coverage_<n>`: interval containment depends only on the rank
+#'   of the observation among the forecast quantiles, which a monotonic
+#'   transform preserves.
+#' - `bias`: scoringutils' quantile/sample bias is defined via the empirical
+#'   CDF position of the observation in the forecast, also rank-based.
+#'
+#' The dashboard pipeline uses this predicate to drop the redundant
+#' transformed-scale columns from `scores.csv` and `predevals-options.json`
+#' so the same metric never appears twice. Matches the invariance set
+#' documented in hubverse-org/hubDocs#464. See #63.
 #'
 #' @param metric Character vector of metric names.
 #' @return Logical vector the same length as `metric`.
 #' @noRd
 is_transform_invariant <- function(metric) {
-  grepl("^interval_coverage_[0-9]+$", metric)
+  grepl("^(interval_coverage_[0-9]+|bias)$", metric)
 }
 
 
