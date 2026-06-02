@@ -4,7 +4,7 @@
   "targets": [
     {
       "target_id": "wk inc flu hosp",
-      "metrics": ["wis", "wis__log", "ae_median", "ae_median__log", "interval_coverage_50", "interval_coverage_50__log", "interval_coverage_95", "interval_coverage_95__log"],
+      "metrics": ["wis", "wis__log", "ae_median", "ae_median__log", "interval_coverage_50", "interval_coverage_95"],
       "disaggregate_by": ["location", "reference_date", "horizon", "target_end_date"],
       "transform": {
         "fun": "log_shift",

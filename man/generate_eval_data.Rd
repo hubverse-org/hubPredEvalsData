@@ -4,7 +4,7 @@
 \alias{generate_eval_data}
 \title{Generate evaluation data for a hub}
 \usage{
-generate_eval_data(hub_path, config_path, out_path, oracle_output)
+generate_eval_data(hub_path, config_path, out_path, oracle_output = NULL)
 }
 \arguments{
 \item{hub_path}{A path to the hub.}
@@ -14,7 +14,11 @@ options for the evaluation.}
 
 \item{out_path}{The directory to write the evaluation data to.}
 
-\item{oracle_output}{A data frame of oracle output to use for the evaluation.}
+\item{oracle_output}{Optional data frame of oracle output to use for the
+evaluation. When \code{NULL} (the default), oracle output is discovered from
+\code{hub_path} via \code{\link[hubData:connect_target_oracle_output]{hubData::connect_target_oracle_output()}}. Supplying a
+pre-loaded data frame remains supported for back-compat with callers
+that load oracle data themselves.}
 }
 \description{
 Scores each target configured in the predevals config against its oracle
@@ -29,7 +33,9 @@ in wide format, with one row per model per disaggregation key.
 When a target has a configured transform, transformed-scale metrics appear
 as \verb{<metric>__<label>}-suffixed columns (e.g. \code{wis__log}) alongside the
 natural-scale columns. Setting \code{append: false} emits only the suffixed
-columns.
+columns. Transform-invariant metrics (\verb{interval_coverage_<n>} and \code{bias},
+whose values are unchanged by any monotonic transform) always appear only
+under their natural-scale name regardless of \code{append}.
 
 For the full configuration schema, see the JSON Schema files installed
 with the package under

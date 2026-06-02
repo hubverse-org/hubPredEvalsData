@@ -247,7 +247,9 @@ test_that("generate_eval_data applies per-target transform with append=TRUE", {
     "interval_coverage_50",
     "interval_coverage_95"
   )
-  transformed_metrics <- paste0(natural_metrics, "__log")
+  # Interval coverage is invariant under monotonic transforms (#63), so the
+  # pipeline drops its transformed-scale columns from scores.csv.
+  transformed_metrics <- c("wis__log", "ae_median__log")
 
   # generate_eval_data emits an overall scores.csv plus one per "by" task_id
   # the config requests aggregation by. Iterate over all of them to confirm
@@ -270,6 +272,12 @@ test_that("generate_eval_data applies per-target transform with append=TRUE", {
 
     scores <- read.csv(scores_path)
     expect_true(all(c(natural_metrics, transformed_metrics) %in% names(scores)))
+    # Interval coverage is invariant under monotonic transforms (#63), so its
+    # transformed-scale columns must not appear at any aggregation level.
+    expect_false(any(
+      c("interval_coverage_50__log", "interval_coverage_95__log") %in%
+        names(scores)
+    ))
     expect_true("n" %in% names(scores))
     id_cols <- c("model_id", if (!is.null(by)) by)
     expect_equal(
@@ -294,9 +302,7 @@ test_that("generate_eval_data applies per-target transform with append=TRUE", {
       "ae_median",
       "ae_median__log",
       "interval_coverage_50",
-      "interval_coverage_50__log",
       "interval_coverage_95",
-      "interval_coverage_95__log",
       "n"
     )
   )
@@ -416,17 +422,16 @@ test_that("generate_eval_data with transform append=FALSE emits only transformed
   scores <- read.csv(
     file.path(out_path, "wk inc flu hosp", "Full season", "scores.csv")
   )
+  # Proper-scoring-rule metrics appear only on the transformed scale.
+  expect_true(all(c("wis__log", "ae_median__log") %in% names(scores)))
+  expect_false(any(c("wis", "ae_median") %in% names(scores)))
+  # Interval coverage is invariant under monotonic transforms (#63), so its
+  # column keeps the natural-scale name even when append=FALSE.
   expect_true(all(
-    c(
-      "wis__log",
-      "ae_median__log",
-      "interval_coverage_50__log",
-      "interval_coverage_95__log"
-    ) %in%
-      names(scores)
+    c("interval_coverage_50", "interval_coverage_95") %in% names(scores)
   ))
   expect_false(any(
-    c("wis", "ae_median", "interval_coverage_50", "interval_coverage_95") %in%
+    c("interval_coverage_50__log", "interval_coverage_95__log") %in%
       names(scores)
   ))
 })
@@ -451,7 +456,9 @@ test_that("generate_eval_data scores relative skill on the transformed scale whe
   )
   # append=FALSE emits only transformed-scale columns, including the
   # relative-skill columns computed on the transformed scale. Columns are
-  # bunched per metric: scaled relative skill, then the base metric.
+  # bunched per metric: scaled relative skill, then the base metric. Interval
+  # coverage is invariant under monotonic transforms (#63), so it keeps its
+  # natural-scale name.
   expect_identical(
     names(scores),
     c(
@@ -460,8 +467,8 @@ test_that("generate_eval_data scores relative skill on the transformed scale whe
       "wis__log",
       "ae_median_scaled_relative_skill__log",
       "ae_median__log",
-      "interval_coverage_50__log",
-      "interval_coverage_95__log",
+      "interval_coverage_50",
+      "interval_coverage_95",
       "n"
     )
   )

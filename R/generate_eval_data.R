@@ -21,7 +21,9 @@
 #' When a target has a configured transform, transformed-scale metrics appear
 #' as `<metric>__<label>`-suffixed columns (e.g. `wis__log`) alongside the
 #' natural-scale columns. Setting `append: false` emits only the suffixed
-#' columns.
+#' columns. Transform-invariant metrics (`interval_coverage_<n>` and `bias`,
+#' whose values are unchanged by any monotonic transform) always appear only
+#' under their natural-scale name regardless of `append`.
 #'
 #' For the full configuration schema, see the JSON Schema files installed
 #' with the package under
@@ -328,6 +330,13 @@ order_relative_metric_cols <- function(
 #' column) and we simply rename all metric columns with the `"__<label>"`
 #' suffix.
 #'
+#' Transform-invariant metrics (`interval_coverage_<n>`, `bias`) are
+#' reported on a single, un-suffixed scale: under `append = TRUE` the
+#' transformed-scale duplicate is dropped before the join; under
+#' `append = FALSE` the metric column keeps its natural-scale name since the
+#' transformed value equals the natural value (see #63 and
+#' `is_transform_invariant()`).
+#'
 #' The double-underscore separator lets downstream tools split a column name
 #' into (base-metric, transform-label) unambiguously, since no current metric
 #' name contains `"__"`.
@@ -335,25 +344,34 @@ order_relative_metric_cols <- function(
 pivot_transformed_scores <- function(scores, by, label, append) {
   id_cols <- c("model_id", by)
   if (!append) {
-    return(suffix_metric_cols(scores, id_cols, label))
+    return(suffix_transformed_metric_cols(scores, id_cols, label))
   }
 
   is_natural <- scores$scale == "natural"
   keep_cols <- setdiff(names(scores), "scale")
   natural <- scores[is_natural, keep_cols, drop = FALSE]
-  transformed <- suffix_metric_cols(
-    scores[!is_natural, keep_cols, drop = FALSE],
-    id_cols,
-    label
-  )
+  transformed <- scores[!is_natural, keep_cols, drop = FALSE]
+  transformed <- transformed[,
+    !is_transform_invariant(names(transformed)),
+    drop = FALSE
+  ]
+  transformed <- suffix_transformed_metric_cols(transformed, id_cols, label)
   dplyr::left_join(natural, transformed, by = id_cols)
 }
 
 
-#' Rename non-id columns in `df` by suffixing them with `"__<label>"`.
+#' Rename non-id columns in `df` by suffixing them with `"__<label>"`. Columns
+#' for transform-invariant metrics (`interval_coverage_<n>`, `bias`) are left
+#' un-suffixed: their transformed value equals the natural value, so the
+#' natural-scale name is the honest label. See #63.
 #' @noRd
-suffix_metric_cols <- function(df, id_cols, label) {
-  is_metric <- !names(df) %in% id_cols
-  names(df)[is_metric] <- paste0(names(df)[is_metric], "__", label)
+suffix_transformed_metric_cols <- function(df, id_cols, label) {
+  is_transformed_metric <- !names(df) %in% id_cols &
+    !is_transform_invariant(names(df))
+  names(df)[is_transformed_metric] <- paste0(
+    names(df)[is_transformed_metric],
+    "__",
+    label
+  )
   df
 }
