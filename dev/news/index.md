@@ -18,6 +18,15 @@
 - `scores.csv` is now emitted in wide format, with transformed-scale
   metrics as `<metric>__<label>`-suffixed columns (e.g. `wis__log`).
   Setting `append: false` emits only the suffixed columns.
+- Transform-invariant metrics (`interval_coverage_<n>` and `bias`) are
+  now always reported on a single, un-suffixed scale in `scores.csv` and
+  `predevals-options.json`, even when a transform is configured. Both
+  are unchanged by any strictly monotonic transform (interval
+  containment and the sign of forecast-vs-observation error are
+  rank-based), so the transformed-scale column was a duplicate of the
+  natural-scale column. Matches the invariance set documented in
+  `hubverse-org/hubDocs#464`
+  ([\#63](https://github.com/hubverse-org/hubPredEvalsData/issues/63)).
 - Existing v1.0.1 configs continue to validate against v1.1.0 without
   changes.
 - Added

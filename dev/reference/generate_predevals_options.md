@@ -43,7 +43,10 @@ needs to populate its metric selector:
   before each metric listed in `relative_metrics`. When a transform
   applies, the transformed-scale `<metric>__<label>` columns are
   appended, or replace the natural-scale columns when `append: false`.
-  This is the list the dashboard iterates to build its metric selector.
+  Transform-invariant metrics (`interval_coverage_<n>`, `bias`) are
+  unchanged by any monotonic transform and so always appear only under
+  their natural-scale name. This is the list the dashboard iterates to
+  build its metric selector.
 
 - `transform`: the resolved transform for the target (with
   `transform_defaults` inheritance applied), as a list with `fun`,
