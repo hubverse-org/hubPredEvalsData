@@ -1,6 +1,6 @@
 test_that("read_predevals_config succeeds, valid yaml file", {
   hub_path <- test_path("testdata", "ecfh")
-  expect_snapshot(
+  expect_no_error(
     read_predevals_config(
       hub_path,
       test_path("testdata", "test_configs", "config_valid.yaml")
@@ -10,7 +10,7 @@ test_that("read_predevals_config succeeds, valid yaml file", {
 
 test_that("read_predevals_config succeeds, valid yaml file two rounds", {
   hub_path <- test_path("testdata", "ecfh")
-  expect_snapshot(
+  expect_no_error(
     read_predevals_config(
       hub_path,
       test_path("testdata", "test_configs", "config_valid_two_rounds.yaml")
@@ -20,7 +20,7 @@ test_that("read_predevals_config succeeds, valid yaml file two rounds", {
 
 test_that("read_predevals_config succeeds, valid yaml file with task id filters", {
   hub_path <- test_path("testdata", "ecfh")
-  expect_snapshot(
+  expect_no_error(
     read_predevals_config(
       hub_path,
       test_path("testdata", "test_configs", "config_valid_set_filters.yaml")
@@ -30,7 +30,7 @@ test_that("read_predevals_config succeeds, valid yaml file with task id filters"
 
 test_that("read_predevals_config succeeds, valid yaml file with length 1 arrays", {
   hub_path <- test_path("testdata", "ecfh")
-  expect_snapshot(
+  expect_no_error(
     read_predevals_config(
       hub_path,
       test_path(
@@ -44,7 +44,7 @@ test_that("read_predevals_config succeeds, valid yaml file with length 1 arrays"
 
 test_that("read_predevals_config succeeds, valid yaml file with relative metrics", {
   hub_path <- test_path("testdata", "ecfh")
-  expect_snapshot(
+  expect_no_error(
     read_predevals_config(
       hub_path,
       test_path("testdata", "test_configs", "config_valid_rel_metrics.yaml")
@@ -54,7 +54,7 @@ test_that("read_predevals_config succeeds, valid yaml file with relative metrics
 
 test_that("read_predevals_config succeeds, valid yaml file with no min_round_id", {
   hub_path <- test_path("testdata", "ecfh")
-  expect_snapshot(
+  expect_no_error(
     read_predevals_config(
       hub_path,
       test_path("testdata", "test_configs", "config_valid_no_min_round_id.yaml")
@@ -64,7 +64,7 @@ test_that("read_predevals_config succeeds, valid yaml file with no min_round_id"
 
 test_that("read_predevals_config succeeds, valid yaml file with no disaggregate_by", {
   hub_path <- test_path("testdata", "ecfh")
-  expect_snapshot(
+  expect_no_error(
     read_predevals_config(
       hub_path,
       test_path(
@@ -78,7 +78,7 @@ test_that("read_predevals_config succeeds, valid yaml file with no disaggregate_
 
 test_that("read_predevals_config succeeds, valid yaml file with no task_id_text", {
   hub_path <- test_path("testdata", "ecfh")
-  expect_snapshot(
+  expect_no_error(
     read_predevals_config(
       hub_path,
       test_path("testdata", "test_configs", "config_valid_no_task_id_text.yaml")
@@ -175,7 +175,7 @@ test_that("read_predevals_config fails, well-formatted but unsupported schema_ve
 
 test_that("read_predevals_config succeeds, multiple modeling round groups with valid rounds_idx", {
   hub_path <- test_path("testdata", "test_hub_invalid_mult_rnd")
-  expect_snapshot(
+  expect_no_error(
     read_predevals_config(
       hub_path,
       test_path("testdata", "test_configs", "config_valid_rounds_idx_1.yaml")

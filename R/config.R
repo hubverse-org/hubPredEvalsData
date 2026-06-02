@@ -444,7 +444,7 @@ validate_transform_args <- function(transform, target_id) {
   }
 
   func <- get_transform_function(func_name)
-  allowed_args <- setdiff(formalArgs(func), "x")
+  allowed_args <- setdiff(methods::formalArgs(func), "x")
 
   extra_args <- setdiff(names(args), allowed_args)
   if (length(extra_args) > 0) {

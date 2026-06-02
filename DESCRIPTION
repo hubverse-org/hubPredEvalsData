@@ -15,6 +15,7 @@ Imports:
     hubUtils,
     jsonlite,
     jsonvalidate,
+    methods,
     purrr,
     rlang,
     scoringutils (>= 2.2.0),
