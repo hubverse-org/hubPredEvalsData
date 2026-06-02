@@ -17,8 +17,10 @@
 #'   column order. A `<metric>_scaled_relative_skill` entry is spliced in
 #'   before each metric listed in `relative_metrics`. When a transform applies,
 #'   the transformed-scale `<metric>__<label>` columns are appended, or replace
-#'   the natural-scale columns when `append: false`. This is the list the
-#'   dashboard iterates to build its metric selector.
+#'   the natural-scale columns when `append: false`. Interval coverage metrics
+#'   are invariant under monotonic transforms and so always appear under their
+#'   natural-scale name. This is the list the dashboard iterates to build its
+#'   metric selector.
 #' - `transform`: the resolved transform for the target (with
 #'   `transform_defaults` inheritance applied), as a list with `fun`, `label`,
 #'   `append` and a composed human-readable `description` the dashboard can

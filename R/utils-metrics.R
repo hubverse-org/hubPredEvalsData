@@ -88,6 +88,10 @@ expand_relative_skill_metrics <- function(metrics, relative_metrics) {
 #' `generate_eval_data()`, which drops the natural scale then). The base metric
 #' of a `<metric>_scaled_relative_skill` entry determines transformability.
 #'
+#' Interval coverage metrics are invariant under monotonic transforms (a
+#' quantile is still the same quantile after transformation), so they are
+#' reported on a single, un-suffixed scale regardless of `append`. See #63.
+#'
 #' @param expanded_metrics Character vector from `expand_relative_skill_metrics()`.
 #' @param transformable_metrics Character vector of base metric names on a
 #'   transformable output type.
@@ -104,13 +108,28 @@ expand_transformed_metrics <- function(
 ) {
   base_metrics <- sub("_scaled_relative_skill$", "", expanded_metrics)
   purrr::map2(expanded_metrics, base_metrics, function(metric, base) {
-    if (!base %in% transformable_metrics) {
+    if (!base %in% transformable_metrics || is_transform_invariant(base)) {
       return(metric)
     }
     transformed <- paste0(metric, "__", label)
     if (append) c(metric, transformed) else transformed
   }) |>
     unlist()
+}
+
+
+#' Identify metrics that are invariant under monotonic scale transforms.
+#'
+#' Interval coverage compares observations against forecast quantiles, so any
+#' monotonic transform of both leaves the coverage indicator unchanged. The
+#' dashboard pipeline uses this to drop redundant transformed-scale interval
+#' coverage columns from `scores.csv` and `predevals-options.json`. See #63.
+#'
+#' @param metric Character vector of metric names.
+#' @return Logical vector the same length as `metric`.
+#' @noRd
+is_transform_invariant <- function(metric) {
+  grepl("^interval_coverage_[0-9]+$", metric)
 }
 
 

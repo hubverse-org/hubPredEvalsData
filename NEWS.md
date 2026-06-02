@@ -8,6 +8,7 @@
   * Supported transform functions: `log_shift`, `sqrt`, `log1p`, `log`, `log10`, `log2`.
 * Configured transforms are now applied during scoring (#40).
 * `scores.csv` is now emitted in wide format, with transformed-scale metrics as `<metric>__<label>`-suffixed columns (e.g. `wis__log`). Setting `append: false` emits only the suffixed columns.
+* Interval coverage metrics (e.g. `interval_coverage_50`) are now always reported on a single, un-suffixed scale in `scores.csv` and `predevals-options.json`, even when a transform is configured. Interval coverage is invariant under monotonic transforms, so the transformed-scale column was a duplicate of the natural-scale column (#63).
 * Existing v1.0.1 configs continue to validate against v1.1.0 without changes.
 * Added `generate_predevals_options()`, which assembles the contents of the `predevals-options.json` file used to initialise the predevals dashboard. It returns the validated config with each target's `metrics` expanded to the columns present in `scores.csv` (relative-skill metrics, plus transformed-scale `<metric>__<label>` metrics when a transform applies) and a resolved `transform` block attached (#41, closes #4).
 * `generate_eval_data()` now discovers oracle output from `hub_path` via `hubData::connect_target_oracle_output()` when `oracle_output` is not supplied; the argument remains supported for back-compat (#51).
