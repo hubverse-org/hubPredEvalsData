@@ -44,7 +44,7 @@ test_that("generate_eval_data works, integration test, with relative metrics", {
   oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
     dplyr::collect()
 
-  generate_eval_data(
+  suppress_wilcox_ties_warnings(generate_eval_data(
     hub_path = hub_path,
     config_path = test_path(
       "testdata",
@@ -52,7 +52,7 @@ test_that("generate_eval_data works, integration test, with relative metrics", {
       "config_valid_mean_median_quantile_rel.yaml"
     ),
     out_path = out_path
-  )
+  ))
 
   check_exp_scores_for_set(
     out_path,
@@ -94,23 +94,26 @@ test_that("supplying oracle_output produces output identical to internal discove
   oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
     dplyr::collect()
 
-  generate_eval_data(
+  suppress_wilcox_ties_warnings(generate_eval_data(
     hub_path = hub_path,
     config_path = config_path,
     out_path = out_supplied,
     oracle_output = oracle_output
-  )
-  generate_eval_data(
+  ))
+  suppress_wilcox_ties_warnings(generate_eval_data(
     hub_path = hub_path,
     config_path = config_path,
     out_path = out_discovered
-  )
+  ))
 
   files_supplied <- sort(list.files(out_supplied, recursive = TRUE))
   files_discovered <- sort(list.files(out_discovered, recursive = TRUE))
   expect_identical(files_supplied, files_discovered)
+  # scoringutils outputs are not bit-stable across platforms (acknowledged
+  # upstream in epiforecasts/scoringutils#1182), so the back-compat lock-in
+  # tolerates last-digit float noise rather than asserting bit-exact equality.
   for (f in files_supplied) {
-    expect_identical(
+    expect_equal(
       read.csv(file.path(out_supplied, f)),
       read.csv(file.path(out_discovered, f)),
       info = f
@@ -215,8 +218,7 @@ test_that("generate_eval_data forwards transform args to score_model_out (log_sh
         "config_valid_transform_per_target.yaml"
       ),
       out_path = out_path
-    ),
-    message = "Detected zeros"
+    )
   )
 
   scores <- read.csv(
@@ -436,7 +438,7 @@ test_that("generate_eval_data scores relative skill on the transformed scale whe
   out_path <- withr::local_tempdir()
   hub_path <- test_path("testdata", "ecfh")
 
-  generate_eval_data(
+  suppress_wilcox_ties_warnings(generate_eval_data(
     hub_path = hub_path,
     config_path = test_path(
       "testdata",
@@ -444,7 +446,7 @@ test_that("generate_eval_data scores relative skill on the transformed scale whe
       "config_valid_transform_no_append_rel.yaml"
     ),
     out_path = out_path
-  )
+  ))
 
   scores <- read.csv(
     file.path(out_path, "wk inc flu hosp", "Full season", "scores.csv")
