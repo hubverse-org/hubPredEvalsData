@@ -2,6 +2,8 @@
 
 ## hubPredEvalsData (development version)
 
+## hubPredEvalsData 1.1.0
+
 ### New Features
 
 - Added optional scale-transformation support to `predevals-config.yml`

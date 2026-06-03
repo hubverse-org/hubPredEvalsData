@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hubPredEvalsData</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,8 +33,11 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="hubpredevalsdata-development-version">hubPredEvalsData (development version)<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.0" id="hubpredevalsdata-110">hubPredEvalsData 1.1.0<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-110"></a></h2>
 <div class="section level3">
-<h3 id="new-features-development-version">New Features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="new-features-1-1-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-1-0"></a></h3>
 <ul><li>Added optional scale-transformation support to <code>predevals-config.yml</code> via schema version <code>v1.1.0</code> (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/39" class="external-link">#39</a>):
 <ul><li>
 <code>transform_defaults</code> — top-level default transform applied to all transformable targets.</li>
@@ -52,7 +55,7 @@
 <code><a href="../reference/generate_eval_data.html">generate_eval_data()</a></code> now discovers oracle output from <code>hub_path</code> via <code><a href="https://hubverse-org.github.io/hubData/reference/connect_target_oracle_output.html" class="external-link">hubData::connect_target_oracle_output()</a></code> when <code>oracle_output</code> is not supplied; the argument remains supported for back-compat (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/51" class="external-link">#51</a>).</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<h3 id="bug-fixes-1-1-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-0"></a></h3>
 <ul><li>
 <code><a href="../reference/generate_eval_data.html">generate_eval_data()</a></code> no longer fails on ordinal pmf targets that request <code>rps</code>. The ordinal level order is now read from the hub’s <code>tasks.json</code> and forwarded to <code><a href="https://hubverse-org.github.io/hubEvals/reference/score_model_out.html" class="external-link">hubEvals::score_model_out()</a></code> so scoringutils dispatches the data as ordinal (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/48" class="external-link">#48</a>).</li>
 <li>
@@ -92,7 +95,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Evan Ray.</p>
+  <p>Developed by Evan Ray, Anna Krystalli.</p>
 </div>
 
 <div class="pkgdown-footer-right">
