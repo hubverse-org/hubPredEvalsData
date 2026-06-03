@@ -1,8 +1,10 @@
 Package: hubPredEvalsData
 Title: Data Creation for Hub Prediction Evaluations via predevals
-Version: 1.0.0.9000
+Version: 1.1.0
 Authors@R: c(
-    person("Evan", "Ray", , "elray@umass.edu", role = c("aut", "cre"))
+    person("Evan", "Ray", , "elray@umass.edu", role = "aut"),
+    person("Anna", "Krystalli", , "annakrystalli@googlemail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-2378-4915"))
     )
 Description: This package generates data objects with scores for predictions in
     a hub, to be displayed on a dashboard using predevals.
