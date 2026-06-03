@@ -12,6 +12,7 @@ You can install the development version of hubPredEvalsData from
 [GitHub](https://github.com/) with:
 
 ``` r
+
 # install.packages("remotes")
 remotes::install_github("hubverse-org/hubPredEvalsData")
 ```
@@ -19,22 +20,30 @@ remotes::install_github("hubverse-org/hubPredEvalsData")
 ## Code of Conduct
 
 Please note that the hubPredEvalsData package is released with a
-[Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing to
-this project, you agree to abide by its terms.
+[Contributor Code of
+Conduct](https://hubverse-org.github.io/hubPredEvalsData/CODE_OF_CONDUCT.md).
+By contributing to this project, you agree to abide by its terms.
 
 ## Contributing
 
 Interested in contributing back to the open-source Hubverse project?
 Learn more about how to [get involved in the Hubverse
 Community](https://hubverse.io/community/) or [how to contribute to the
-hubPredEvalsData package](CONTRIBUTING.md).
+hubPredEvalsData
+package](https://hubverse-org.github.io/hubPredEvalsData/CONTRIBUTING.md).
 
 # Package index
 
 ## All functions
 
-- [`generate_eval_data()`](generate_eval_data.md) : Generate evaluation
-  data for a hub
-- [`read_predevals_config()`](read_predevals_config.md) : Load and
-  validate a predevals config file
+- [`generate_eval_data()`](https://hubverse-org.github.io/hubPredEvalsData/reference/generate_eval_data.md)
+  : Generate evaluation data for a hub
+
+- [`generate_predevals_options()`](https://hubverse-org.github.io/hubPredEvalsData/reference/generate_predevals_options.md)
+  :
+
+  Generate the contents of the `predevals-options.json` file
+
+- [`read_predevals_config()`](https://hubverse-org.github.io/hubPredEvalsData/reference/read_predevals_config.md)
+  : Load and validate a predevals config file
 

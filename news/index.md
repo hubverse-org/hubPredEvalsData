@@ -1,5 +1,67 @@
 # Changelog
 
+## hubPredEvalsData 1.1.0
+
+### New Features
+
+- Added optional scale-transformation support to `predevals-config.yml`
+  via schema version `v1.1.0`
+  ([\#39](https://github.com/hubverse-org/hubPredEvalsData/issues/39)):
+  - `transform_defaults` — top-level default transform applied to all
+    transformable targets.
+  - `targets[*].transform` — per-target transform that overrides
+    `transform_defaults`, or the literal `false` to opt a target out.
+  - Supported transform functions: `log_shift`, `sqrt`, `log1p`, `log`,
+    `log10`, `log2`.
+- Configured transforms are now applied during scoring
+  ([\#40](https://github.com/hubverse-org/hubPredEvalsData/issues/40)).
+- `scores.csv` is now emitted in wide format, with transformed-scale
+  metrics as `<metric>__<label>`-suffixed columns (e.g. `wis__log`).
+  Setting `append: false` emits only the suffixed columns.
+- Transform-invariant metrics (`interval_coverage_<n>` and `bias`) are
+  now always reported on a single, un-suffixed scale in `scores.csv` and
+  `predevals-options.json`, even when a transform is configured. Both
+  are unchanged by any strictly monotonic transform (interval
+  containment and the sign of forecast-vs-observation error are
+  rank-based), so the transformed-scale column was a duplicate of the
+  natural-scale column. Matches the invariance set documented in
+  `hubverse-org/hubDocs#464`
+  ([\#63](https://github.com/hubverse-org/hubPredEvalsData/issues/63)).
+- Existing v1.0.1 configs continue to validate against v1.1.0 without
+  changes.
+- Added
+  [`generate_predevals_options()`](https://hubverse-org.github.io/hubPredEvalsData/reference/generate_predevals_options.md),
+  which assembles the contents of the `predevals-options.json` file used
+  to initialise the predevals dashboard. It returns the validated config
+  with each target’s `metrics` expanded to the columns present in
+  `scores.csv` (relative-skill metrics, plus transformed-scale
+  `<metric>__<label>` metrics when a transform applies) and a resolved
+  `transform` block attached
+  ([\#41](https://github.com/hubverse-org/hubPredEvalsData/issues/41),
+  closes
+  [\#4](https://github.com/hubverse-org/hubPredEvalsData/issues/4)).
+- [`generate_eval_data()`](https://hubverse-org.github.io/hubPredEvalsData/reference/generate_eval_data.md)
+  now discovers oracle output from `hub_path` via
+  [`hubData::connect_target_oracle_output()`](https://hubverse-org.github.io/hubData/reference/connect_target_oracle_output.html)
+  when `oracle_output` is not supplied; the argument remains supported
+  for back-compat
+  ([\#51](https://github.com/hubverse-org/hubPredEvalsData/issues/51)).
+
+### Bug Fixes
+
+- [`generate_eval_data()`](https://hubverse-org.github.io/hubPredEvalsData/reference/generate_eval_data.md)
+  no longer fails on ordinal pmf targets that request `rps`. The ordinal
+  level order is now read from the hub’s `tasks.json` and forwarded to
+  [`hubEvals::score_model_out()`](https://hubverse-org.github.io/hubEvals/reference/score_model_out.html)
+  so scoringutils dispatches the data as ordinal
+  ([\#48](https://github.com/hubverse-org/hubPredEvalsData/issues/48)).
+- [`read_predevals_config()`](https://hubverse-org.github.io/hubPredEvalsData/reference/read_predevals_config.md)
+  now warns when an ordinal-only pmf metric (e.g. `rps`) is requested
+  against a pre-v4 tasks-schema (where `output_type_id` is split across
+  `required`/`optional`), and errors if the hub’s pmf
+  `output_type_id$optional` is non-empty
+  ([\#48](https://github.com/hubverse-org/hubPredEvalsData/issues/48)).
+
 ## hubPredEvalsData 1.0.0
 
 This is a **breaking change** release that adds support for hubs with
