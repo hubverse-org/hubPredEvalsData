@@ -1,6 +1,6 @@
 Package: hubPredEvalsData
 Title: Data Creation for Hub Prediction Evaluations via predevals
-Version: 1.1.0.9000
+Version: 1.1.1
 Authors@R: c(
     person("Evan", "Ray", , "elray@umass.edu", role = "aut"),
     person("Anna", "Krystalli", , "annakrystalli@googlemail.com", role = c("aut", "cre"),

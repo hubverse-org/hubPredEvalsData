@@ -122,6 +122,28 @@ test_that("supplying oracle_output produces output identical to internal discove
 })
 
 
+test_that("generate_eval_data tolerates an as_of column in oracle output", {
+  # Versioned target-data carries an `as_of` provenance column (#70) that
+  # hubEvals scoring would reject. generate_eval_data should drop it and score
+  # without error.
+  hub_path <- test_path("testdata", "ecfh")
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
+  oracle_output$as_of <- as.Date("2026-06-10")
+
+  expect_no_error(generate_eval_data(
+    hub_path = hub_path,
+    config_path = test_path(
+      "testdata",
+      "test_configs",
+      "config_valid_mean_median_quantile.yaml"
+    ),
+    out_path = withr::local_tempdir(),
+    oracle_output = oracle_output
+  ))
+})
+
+
 test_that("generate_eval_data resolves and applies per-target transforms independently across targets", {
   hub_path <- withr::local_tempdir()
   out_path <- withr::local_tempdir()
