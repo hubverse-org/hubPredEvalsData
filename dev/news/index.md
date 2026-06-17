@@ -2,6 +2,19 @@
 
 ## hubPredEvalsData (development version)
 
+## hubPredEvalsData 1.1.1
+
+### Bug Fixes
+
+- [`generate_eval_data()`](https://hubverse-org.github.io/hubPredEvalsData/dev/reference/generate_eval_data.md)
+  no longer fails when a hub’s oracle output includes an `as_of`
+  provenance column (versioned target-data). Oracle output holds a
+  single value per observational unit, so the column is dropped before
+  scoring rather than being passed through to
+  [`hubEvals::score_model_out()`](https://hubverse-org.github.io/hubEvals/reference/score_model_out.html),
+  which rejects columns outside the task-id keys plus `oracle_value`
+  ([\#70](https://github.com/hubverse-org/hubPredEvalsData/issues/70)).
+
 ## hubPredEvalsData 1.1.0
 
 ### New Features

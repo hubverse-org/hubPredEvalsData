@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hubPredEvalsData</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,14 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="hubpredevalsdata-development-version">hubPredEvalsData (development version)<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.1" id="hubpredevalsdata-111">hubPredEvalsData 1.1.1<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-111"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-1-1-1">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-1"></a></h3>
+<ul><li>
+<code><a href="../reference/generate_eval_data.html">generate_eval_data()</a></code> no longer fails when a hub’s oracle output includes an <code>as_of</code> provenance column (versioned target-data). Oracle output holds a single value per observational unit, so the column is dropped before scoring rather than being passed through to <code><a href="https://hubverse-org.github.io/hubEvals/reference/score_model_out.html" class="external-link">hubEvals::score_model_out()</a></code>, which rejects columns outside the task-id keys plus <code>oracle_value</code> (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/70" class="external-link">#70</a>).</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="hubpredevalsdata-110">hubPredEvalsData 1.1.0<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-110"></a></h2>
