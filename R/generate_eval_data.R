@@ -41,6 +41,11 @@ generate_eval_data <- function(
     oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
       dplyr::collect()
   }
+  # Oracle output may carry an `as_of` provenance column from versioned
+  # target-data. It holds a single value per observational unit (no version
+  # axis to resolve), but hubEvals scoring rejects columns outside the task-id
+  # keys plus `oracle_value`, so drop it before scoring. A no-op when absent.
+  oracle_output$as_of <- NULL
   for (target in config$targets) {
     generate_target_eval_data(hub_path, config, out_path, oracle_output, target)
   }
