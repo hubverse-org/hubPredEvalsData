@@ -13,6 +13,15 @@
 #' augmented with the metric and transform metadata the dashboard needs to
 #' populate its metric selector:
 #'
+#' - `target_name` and `target_units`: the human-readable target name and unit
+#'   of observation from the hub's tasks.json `target_metadata`, spliced in just
+#'   after `target_id`. `target_name` is used by the dashboard to label target
+#'   menu items (falling back to `target_id` when absent). `target_units` is
+#'   passed through so the dashboard can, in future, label the scale of
+#'   unit-valued scores (e.g. WIS, ae_median, interval widths); it is not yet
+#'   consumed. Both are required `target_metadata` properties in every
+#'   tasks-schema version, so they are always present.
+#'
 #' - `metrics`: the metric columns present in the target's `scores.csv`, in
 #'   column order. A `<metric>_scaled_relative_skill` entry is spliced in
 #'   before each metric listed in `relative_metrics`. When a transform applies,
@@ -65,6 +74,26 @@ generate_predevals_options <- function(hub_path, config_path) {
 #'   `rounds_idx`).
 #' @noRd
 build_target_options <- function(hub_path, config, target) {
+  task_groups_w_target <- get_task_groups_w_target(
+    hub_path,
+    target$target_id,
+    config$rounds_idx
+  )
+
+  # Splice the human-readable target name and unit of observation from the
+  # hub's tasks.json target_metadata in just after target_id, where the
+  # dashboard expects them. Both are required target_metadata properties in
+  # every tasks-schema version, so they are always present here.
+  target_metadata <- task_groups_w_target[[1]]$target_metadata[[1]]
+  target <- append(
+    target,
+    list(
+      target_name = target_metadata$target_name,
+      target_units = target_metadata$target_units
+    ),
+    after = match("target_id", names(target))
+  )
+
   # get_metric_name_to_output_type() matches metrics by exact name, so it
   # needs the un-expanded metrics, not the `_scaled_relative_skill` names.
   raw_metrics <- target$metrics
@@ -83,11 +112,6 @@ build_target_options <- function(hub_path, config, target) {
     return(target)
   }
 
-  task_groups_w_target <- get_task_groups_w_target(
-    hub_path,
-    target$target_id,
-    config$rounds_idx
-  )
   metric_output_types <- get_metric_name_to_output_type(
     task_groups_w_target,
     raw_metrics

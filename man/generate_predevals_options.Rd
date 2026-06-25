@@ -31,6 +31,14 @@ The result is the validated predevals config with each entry of \code{targets}
 augmented with the metric and transform metadata the dashboard needs to
 populate its metric selector:
 \itemize{
+\item \code{target_name} and \code{target_units}: the human-readable target name and unit
+of observation from the hub's tasks.json \code{target_metadata}, spliced in just
+after \code{target_id}. \code{target_name} is used by the dashboard to label target
+menu items (falling back to \code{target_id} when absent). \code{target_units} is
+passed through so the dashboard can, in future, label the scale of
+unit-valued scores (e.g. WIS, ae_median, interval widths); it is not yet
+consumed. Both are required \code{target_metadata} properties in every
+tasks-schema version, so they are always present.
 \item \code{metrics}: the metric columns present in the target's \code{scores.csv}, in
 column order. A \verb{<metric>_scaled_relative_skill} entry is spliced in
 before each metric listed in \code{relative_metrics}. When a transform applies,

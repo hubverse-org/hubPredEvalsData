@@ -1,5 +1,9 @@
 # hubPredEvalsData (development version)
 
+## New Features
+
+* `generate_predevals_options()` now pulls `target_name` and `target_units` from the hub's `tasks.json` `target_metadata` into each `targets` entry, just after `target_id`. The dashboard uses `target_name` to label target menu items; `target_units` is passed through for future labelling of unit-valued scores (#21).
+
 # hubPredEvalsData 1.1.1
 
 ## Bug Fixes

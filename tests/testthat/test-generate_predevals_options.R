@@ -59,6 +59,35 @@ test_that("output matches the expected predevals-options.json (relative metrics,
 })
 
 
+test_that("target_name and target_units are pulled from the hub target_metadata", {
+  opts <- generate_predevals_options(
+    hub_path = test_path("testdata", "ecfh"),
+    config_path = test_path(
+      "testdata",
+      "test_configs",
+      "config_valid_rel_metrics.yaml"
+    )
+  )
+
+  hosp <- get_target(opts, "wk inc flu hosp")
+  expect_identical(hosp$target_name, "incident influenza hospitalizations")
+  expect_identical(hosp$target_units, "count")
+
+  category <- get_target(opts, "wk flu hosp rate category")
+  expect_identical(
+    category$target_name,
+    "week ahead weekly influenza hospitalization rate category"
+  )
+  expect_identical(category$target_units, "rate per 100,000 population")
+
+  # spliced in just after target_id, where the dashboard expects them
+  expect_identical(
+    names(hosp)[1:3],
+    c("target_id", "target_name", "target_units")
+  )
+})
+
+
 test_that("a pmf-only target with inherited defaults warns and gets no transform", {
   hub_path <- test_path("testdata", "ecfh")
   config_path <- test_path(
