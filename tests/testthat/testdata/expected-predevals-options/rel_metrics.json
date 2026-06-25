@@ -4,6 +4,8 @@
   "targets": [
     {
       "target_id": "wk inc flu hosp",
+      "target_name": "incident influenza hospitalizations",
+      "target_units": "count",
       "metrics": ["wis_scaled_relative_skill", "wis", "ae_median_scaled_relative_skill", "ae_median", "interval_coverage_50", "interval_coverage_95"],
       "relative_metrics": ["wis", "ae_median"],
       "baseline": "FS-base",
@@ -11,6 +13,8 @@
     },
     {
       "target_id": "wk flu hosp rate category",
+      "target_name": "week ahead weekly influenza hospitalization rate category",
+      "target_units": "rate per 100,000 population",
       "metrics": "log_score",
       "disaggregate_by": ["location", "reference_date", "horizon", "target_end_date"]
     }
