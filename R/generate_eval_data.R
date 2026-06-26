@@ -178,6 +178,12 @@ get_and_save_scores <- function(
     dplyr::summarize(n = dplyr::n())
   scores <- scores |> dplyr::left_join(n_tasks_by_group, by = group_cols)
 
+  # The row order coming out of scoring reflects arrow's parallel, scan-order
+  # collect in load_model_out_in_eval_set(), so two runs on identical data emit
+  # the same rows shuffled. Sort on the (model_id, by) key, which is unique per
+  # row, so scores.csv is byte-stable across runs and diffable. See #25.
+  scores <- dplyr::arrange(scores, dplyr::across(dplyr::all_of(group_cols)))
+
   # Save the scores to a .csv file
   target_set_by_out_path <- file.path(out_path, target_id, eval_set_name)
   if (!is.null(by)) {
