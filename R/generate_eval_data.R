@@ -162,7 +162,12 @@ get_and_save_scores <- function(
       task_groups_w_target = task_groups_w_target
     )
   ) |>
-    purrr::reduce(dplyr::left_join, by = c("model_id", by))
+    # Union the (model_id, by) keys across output types with a full join: a
+    # model (or cell) scored only on a later output type must survive rather
+    # than be dropped by anchoring on the first type's frame. NA fills where a
+    # model did not submit a given type, the same as the reverse direction
+    # (anchor-present model lacking a later type) already produced. See #75.
+    purrr::reduce(dplyr::full_join, by = c("model_id", by))
 
   # Add the number of prediction tasks that were scored within each model/by group
   # After dropping output_type, output_type_id, and value, we are left with model_id

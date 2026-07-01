@@ -535,3 +535,99 @@ test_that("generate_eval_data generates an informative message and partial resul
     include_rel = FALSE
   )
 })
+
+
+test_that("a model scored only on a non-anchor output type survives the merge (#75)", {
+  # metrics = c("se_point", "wis") map to output types c("mean", "quantile"),
+  # so the per-output-type merge anchors on `mean` (the first type). A model
+  # submitting only `quantile` is absent from that anchor frame and, under the
+  # old left_join, would be silently dropped along with its valid wis. The
+  # full_join keeps it with NA in the columns it did not submit.
+  hub_path <- test_path("testdata", "ecfh")
+  target_id <- "wk inc flu hosp"
+  task_groups_w_target <- get_task_groups_w_target(hub_path, target_id, 0)
+  metric_name_to_output_type <- get_metric_name_to_output_type(
+    task_groups_w_target,
+    c("se_point", "wis")
+  )
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
+  model_out_tbl <- hubData::connect_hub(hub_path) |>
+    dplyr::collect() |>
+    dplyr::filter(target == target_id)
+  # PSI-DICE now submits no `mean` (anchor) output, only quantile etc.
+  model_out_tbl <- model_out_tbl |>
+    dplyr::filter(!(model_id == "PSI-DICE" & output_type == "mean"))
+
+  out_path <- withr::local_tempdir()
+  get_and_save_scores(
+    model_out_tbl = model_out_tbl,
+    oracle_output = oracle_output,
+    metric_name_to_output_type = metric_name_to_output_type,
+    relative_metrics = NULL,
+    baseline = NULL,
+    target_id = target_id,
+    eval_set_name = "set",
+    by = NULL,
+    out_path = out_path,
+    transform = NULL,
+    task_groups_w_target = task_groups_w_target
+  )
+  scores <- read.csv(
+    file.path(out_path, target_id, "set", "scores.csv")
+  )
+
+  expect_true("PSI-DICE" %in% scores$model_id)
+  psi <- scores[scores$model_id == "PSI-DICE", ]
+  expect_true(is.na(psi$se_point))
+  expect_true(is.finite(psi$wis))
+})
+
+
+test_that("a (model, by) cell present only on a non-anchor output type survives the merge (#75)", {
+  # Disaggregated tables merge on the finer key c("model_id", by), so the drop
+  # happens per cell: a model can look fully present at the overall level yet
+  # lose individual cells wherever its anchor-type coverage has a gap a later
+  # type fills. Here PSI-DICE submits `mean` everywhere except location "US",
+  # where it submits only quantile, so the US cell exists solely on the
+  # non-anchor type.
+  hub_path <- test_path("testdata", "ecfh")
+  target_id <- "wk inc flu hosp"
+  task_groups_w_target <- get_task_groups_w_target(hub_path, target_id, 0)
+  metric_name_to_output_type <- get_metric_name_to_output_type(
+    task_groups_w_target,
+    c("se_point", "wis")
+  )
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
+  model_out_tbl <- hubData::connect_hub(hub_path) |>
+    dplyr::collect() |>
+    dplyr::filter(target == target_id)
+  model_out_tbl <- model_out_tbl |>
+    dplyr::filter(
+      !(model_id == "PSI-DICE" & output_type == "mean" & location == "US")
+    )
+
+  out_path <- withr::local_tempdir()
+  get_and_save_scores(
+    model_out_tbl = model_out_tbl,
+    oracle_output = oracle_output,
+    metric_name_to_output_type = metric_name_to_output_type,
+    relative_metrics = NULL,
+    baseline = NULL,
+    target_id = target_id,
+    eval_set_name = "set",
+    by = "location",
+    out_path = out_path,
+    transform = NULL,
+    task_groups_w_target = task_groups_w_target
+  )
+  scores <- read.csv(
+    file.path(out_path, target_id, "set", "location", "scores.csv")
+  )
+
+  us_psi <- scores[scores$model_id == "PSI-DICE" & scores$location == "US", ]
+  expect_equal(nrow(us_psi), 1)
+  expect_true(is.na(us_psi$se_point))
+  expect_true(is.finite(us_psi$wis))
+})
