@@ -631,3 +631,59 @@ test_that("a (model, by) cell present only on a non-anchor output type survives 
   expect_true(is.na(us_psi$se_point))
   expect_true(is.finite(us_psi$wis))
 })
+
+
+test_that("scores.csv row order is deterministic regardless of input row order (#25)", {
+  # arrow's parallel collect in load_model_out_in_eval_set() returns rows in a
+  # nondeterministic order and hubEvals::score_model_out() carries that order
+  # into its output, so two runs on identical data used to emit the same rows
+  # shuffled. get_and_save_scores() now arranges on the (model_id, by) key
+  # before writing. Feeding deliberately reverse-ordered input must still yield
+  # output in that canonical order, for both the overall (key model_id only)
+  # and disaggregated (key model_id + by) paths.
+  hub_path <- test_path("testdata", "ecfh")
+  target_id <- "wk inc flu hosp"
+  task_groups_w_target <- get_task_groups_w_target(hub_path, target_id, 0)
+  metric_name_to_output_type <- get_metric_name_to_output_type(
+    task_groups_w_target,
+    "wis"
+  )
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
+  reversed_input <- hubData::connect_hub(hub_path) |>
+    dplyr::collect() |>
+    dplyr::filter(target == target_id)
+  # There is no error or warning if the arrange is dropped; the test can only
+  # catch that by comparing row order. But scoring might return rows already in
+  # canonical order by chance, in which case the output would pass even without
+  # the arrange. Reversing the input first guarantees that a dropped arrange
+  # yields reverse-ordered (non-canonical) output, so the assertion fails.
+  reversed_input <- reversed_input[rev(seq_len(nrow(reversed_input))), ]
+
+  for (by in list(NULL, "location")) {
+    out_path <- withr::local_tempdir()
+    get_and_save_scores(
+      model_out_tbl = reversed_input,
+      oracle_output = oracle_output,
+      metric_name_to_output_type = metric_name_to_output_type,
+      relative_metrics = NULL,
+      baseline = NULL,
+      target_id = target_id,
+      eval_set_name = "set",
+      by = by,
+      out_path = out_path,
+      transform = NULL,
+      task_groups_w_target = task_groups_w_target
+    )
+    score_dir <- file.path(out_path, target_id, "set")
+    if (!is.null(by)) {
+      score_dir <- file.path(score_dir, by)
+    }
+    scores <- read.csv(file.path(score_dir, "scores.csv"))
+    expect_equal(
+      scores,
+      dplyr::arrange(scores, dplyr::across(dplyr::all_of(c("model_id", by)))),
+      info = paste("by =", deparse(by))
+    )
+  }
+})
