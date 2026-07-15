@@ -1,8 +1,13 @@
-# hubPredEvalsData (development version)
+# hubPredEvalsData 1.2.0
 
 ## New Features
 
 * `generate_predevals_options()` now pulls `target_name` and `target_units` from the hub's `tasks.json` `target_metadata` into each `targets` entry, just after `target_id`. The dashboard uses `target_name` to label target menu items; `target_units` is passed through for future labelling of unit-valued scores (#21).
+* `scores.csv` rows are now sorted on the `(model_id, by)` key immediately before writing, so the file is byte-stable across runs regardless of arrow's scan order. Scores are unchanged; the deterministic order means outputs can be diffed or md5-compared to confirm a no-change situation (#25).
+
+## Bug Fixes
+
+* `get_and_save_scores()` now merges the per-output-type score frames with a `full_join` instead of a `left_join` anchored on the first output type. Previously any model, or any `(model_id, by)` cell, scored only on a later output type was silently dropped, and which models survived depended on the arbitrary order metrics were listed in the config (#75).
 
 # hubPredEvalsData 1.1.1
 
