@@ -21,7 +21,7 @@ by generate_eval_data()."><meta property="og:image" content="https://hubverse-or
 
     <a class="navbar-brand me-2" href="../index.html">hubPredEvalsData</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,7 +84,15 @@ augmented as described above.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The result is the validated predevals config with each entry of <code>targets</code>
 augmented with the metric and transform metadata the dashboard needs to
-populate its metric selector:</p><ul><li><p><code>metrics</code>: the metric columns present in the target's <code>scores.csv</code>, in
+populate its metric selector:</p><ul><li><p><code>target_name</code> and <code>target_units</code>: the human-readable target name and unit
+of observation from the hub's tasks.json <code>target_metadata</code>, spliced in just
+after <code>target_id</code>. <code>target_name</code> is used by the dashboard to label target
+menu items (falling back to <code>target_id</code> when absent). <code>target_units</code> is
+passed through so the dashboard can, in future, label the scale of
+unit-valued scores (e.g. WIS, ae_median, interval widths); it is not yet
+consumed. Both are required <code>target_metadata</code> properties in every
+tasks-schema version, so they are always present.</p></li>
+<li><p><code>metrics</code>: the metric columns present in the target's <code>scores.csv</code>, in
 column order. A <code>&lt;metric&gt;_scaled_relative_skill</code> entry is spliced in
 before each metric listed in <code>relative_metrics</code>. When a transform applies,
 the transformed-scale <code>&lt;metric&gt;__&lt;label&gt;</code> columns are appended, or replace
@@ -113,7 +121,7 @@ write the result.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>
