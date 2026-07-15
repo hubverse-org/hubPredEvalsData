@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hubPredEvalsData</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,10 +33,20 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="hubpredevalsdata-development-version">hubPredEvalsData (development version)<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.0" id="hubpredevalsdata-120">hubPredEvalsData 1.2.0<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-120"></a></h2>
 <div class="section level3">
-<h3 id="new-features-development-version">New Features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<h3 id="new-features-1-2-0">New Features<a class="anchor" aria-label="anchor" href="#new-features-1-2-0"></a></h3>
 <ul><li>
 <code><a href="../reference/generate_predevals_options.html">generate_predevals_options()</a></code> now pulls <code>target_name</code> and <code>target_units</code> from the hub’s <code>tasks.json</code> <code>target_metadata</code> into each <code>targets</code> entry, just after <code>target_id</code>. The dashboard uses <code>target_name</code> to label target menu items; <code>target_units</code> is passed through for future labelling of unit-valued scores (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/21" class="external-link">#21</a>).</li>
+<li>
+<code>scores.csv</code> rows are now sorted on the <code>(model_id, by)</code> key immediately before writing, so the file is byte-stable across runs regardless of arrow’s scan order. Scores are unchanged; the deterministic order means outputs can be diffed or md5-compared to confirm a no-change situation (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/25" class="external-link">#25</a>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-2-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-2-0"></a></h3>
+<ul><li>
+<code>get_and_save_scores()</code> now merges the per-output-type score frames with a <code>full_join</code> instead of a <code>left_join</code> anchored on the first output type. Previously any model, or any <code>(model_id, by)</code> cell, scored only on a later output type was silently dropped, and which models survived depended on the arbitrary order metrics were listed in the config (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/75" class="external-link">#75</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">
