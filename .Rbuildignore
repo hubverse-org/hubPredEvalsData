@@ -14,3 +14,4 @@
 ^pkgdown$
 ^[.]?air[.]toml$
 ^\.vscode$
+^_benchmark$

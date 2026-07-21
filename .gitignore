@@ -8,3 +8,5 @@
 docs
 .attic/
 .claude/settings.local.json
+_benchmark/Rprof.out
+_benchmark/*.log
