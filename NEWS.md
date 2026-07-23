@@ -1,5 +1,9 @@
 # hubPredEvalsData (development version)
 
+## Bug Fixes
+
+* The number of predictions scored (`n`) in `scores.csv` now counts only forecasts that had a corresponding observation to score against, rather than every submitted prediction, correcting an overcount wherever a model submitted predictions for units with no observation. In the rare case where this count differs across a target's output types, `scores.csv` reports a separate `n_<output_type>` column per output type in place of the single `n` (#19).
+
 # hubPredEvalsData 1.2.0
 
 ## New Features

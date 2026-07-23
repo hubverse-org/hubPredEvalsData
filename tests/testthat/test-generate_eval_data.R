@@ -687,3 +687,194 @@ test_that("scores.csv row order is deterministic regardless of input row order (
     )
   }
 })
+
+
+test_that("n counts only forecasts with a matching oracle observation (#19)", {
+  # The scored count must exclude submitted forecasts that had no oracle
+  # observation to be scored against. Dropping the observations for one location
+  # leaves those location's quantile forecasts unscored, so `n` must fall by
+  # exactly the number of forecast units in that location, not stay at the count
+  # of all submitted units (the pre-#19 behaviour).
+  hub_path <- test_path("testdata", "ecfh")
+  target_id <- "wk inc flu hosp"
+  task_groups_w_target <- get_task_groups_w_target(hub_path, target_id, 0)
+  metric_name_to_output_type <- get_metric_name_to_output_type(
+    task_groups_w_target,
+    "wis"
+  )
+  model_out_tbl <- hubData::connect_hub(hub_path) |>
+    dplyr::collect() |>
+    dplyr::filter(target == target_id)
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
+
+  dropped_loc <- "US"
+  partial_oracle <- oracle_output |> dplyr::filter(location != dropped_loc)
+
+  # Independent expectation: one scored unit per distinct quantile forecast unit
+  # (task-id combination) that has an observation. The oracle is complete, so
+  # with the full oracle every submitted unit is scored; with the partial oracle
+  # the dropped location's units are not.
+  q_units <- model_out_tbl |>
+    dplyr::filter(output_type == "quantile") |>
+    dplyr::distinct(
+      model_id,
+      location,
+      reference_date,
+      horizon,
+      target_end_date
+    )
+  exp_full <- q_units |> dplyr::count(model_id, name = "n")
+  exp_partial <- q_units |>
+    dplyr::filter(location != dropped_loc) |>
+    dplyr::count(model_id, name = "n")
+
+  score_n <- function(oracle) {
+    out_path <- withr::local_tempdir()
+    get_and_save_scores(
+      model_out_tbl = model_out_tbl,
+      oracle_output = oracle,
+      metric_name_to_output_type = metric_name_to_output_type,
+      relative_metrics = NULL,
+      baseline = NULL,
+      target_id = target_id,
+      eval_set_name = "set",
+      by = NULL,
+      out_path = out_path,
+      transform = NULL,
+      task_groups_w_target = task_groups_w_target
+    )
+    read.csv(file.path(out_path, target_id, "set", "scores.csv"))[c(
+      "model_id",
+      "n"
+    )]
+  }
+
+  n_full <- score_n(oracle_output)
+  n_partial <- score_n(partial_oracle)
+
+  expect_equal(n_full, as.data.frame(exp_full), ignore_attr = TRUE)
+  expect_equal(n_partial, as.data.frame(exp_partial), ignore_attr = TRUE)
+  # And the fix actually changed something: fewer scored units once observations
+  # are missing.
+  expect_true(all(n_partial$n < n_full$n))
+})
+
+
+test_that("diverging per-output-type counts are kept as n_<output_type> columns (#19)", {
+  # When a model submits the same output types on different unit sets, the
+  # scored counts legitimately differ across types. Mock scoring so `mean` and
+  # `quantile` report different counts for modelA; the merged table must keep
+  # both `n_mean` and `n_quantile`, each immediately after the metric block it
+  # refers to, rather than collapsing to a single (wrong) `n`.
+  hub_path <- test_path("testdata", "ecfh")
+  target_id <- "wk inc flu hosp"
+  task_groups_w_target <- get_task_groups_w_target(hub_path, target_id, 0)
+  metric_name_to_output_type <- get_metric_name_to_output_type(
+    task_groups_w_target,
+    c("se_point", "wis")
+  )
+  model_out_tbl <- hubData::connect_hub(hub_path) |>
+    dplyr::collect() |>
+    dplyr::filter(target == target_id)
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
+
+  testthat::local_mocked_bindings(
+    score_model_out = function(model_out_tbl, metrics, ...) {
+      if ("wis" %in% metrics) {
+        dplyr::tibble(
+          model_id = c("modelA", "modelB"),
+          wis = c(0.1, 0.2),
+          count = c(12L, 12L)
+        )
+      } else {
+        dplyr::tibble(
+          model_id = c("modelA", "modelB"),
+          se_point = c(2, 3),
+          count = c(10L, 12L)
+        )
+      }
+    }
+  )
+
+  out_path <- withr::local_tempdir()
+  get_and_save_scores(
+    model_out_tbl = model_out_tbl,
+    oracle_output = oracle_output,
+    metric_name_to_output_type = metric_name_to_output_type,
+    relative_metrics = NULL,
+    baseline = NULL,
+    target_id = target_id,
+    eval_set_name = "set",
+    by = NULL,
+    out_path = out_path,
+    transform = NULL,
+    task_groups_w_target = task_groups_w_target
+  )
+  scores <- read.csv(file.path(out_path, target_id, "set", "scores.csv"))
+
+  expect_false("n" %in% names(scores))
+  expect_identical(
+    names(scores),
+    c("model_id", "se_point", "n_mean", "wis", "n_quantile")
+  )
+  modela <- scores[scores$model_id == "modelA", ]
+  expect_equal(modela$n_mean, 10)
+  expect_equal(modela$n_quantile, 12)
+})
+
+
+test_that("agreeing per-output-type counts collapse to a single n (#19)", {
+  # The common case: counts never disagree across output types. modelA submits
+  # both types on the same units (equal counts); modelB submits only quantile
+  # (mean count NA). Neither row carries two differing counts, so the table
+  # collapses to a single `n` column after the metrics.
+  hub_path <- test_path("testdata", "ecfh")
+  target_id <- "wk inc flu hosp"
+  task_groups_w_target <- get_task_groups_w_target(hub_path, target_id, 0)
+  metric_name_to_output_type <- get_metric_name_to_output_type(
+    task_groups_w_target,
+    c("se_point", "wis")
+  )
+  model_out_tbl <- hubData::connect_hub(hub_path) |>
+    dplyr::collect() |>
+    dplyr::filter(target == target_id)
+  oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
+    dplyr::collect()
+
+  testthat::local_mocked_bindings(
+    score_model_out = function(model_out_tbl, metrics, ...) {
+      if ("wis" %in% metrics) {
+        dplyr::tibble(
+          model_id = c("modelA", "modelB"),
+          wis = c(0.1, 0.2),
+          count = c(12L, 12L)
+        )
+      } else {
+        # modelB submits no mean output
+        dplyr::tibble(model_id = "modelA", se_point = 2, count = 12L)
+      }
+    }
+  )
+
+  out_path <- withr::local_tempdir()
+  get_and_save_scores(
+    model_out_tbl = model_out_tbl,
+    oracle_output = oracle_output,
+    metric_name_to_output_type = metric_name_to_output_type,
+    relative_metrics = NULL,
+    baseline = NULL,
+    target_id = target_id,
+    eval_set_name = "set",
+    by = NULL,
+    out_path = out_path,
+    transform = NULL,
+    task_groups_w_target = task_groups_w_target
+  )
+  scores <- read.csv(file.path(out_path, target_id, "set", "scores.csv"))
+
+  expect_false(any(c("n_mean", "n_quantile") %in% names(scores)))
+  expect_identical(names(scores), c("model_id", "se_point", "wis", "n"))
+  expect_equal(scores$n, c(12, 12))
+})

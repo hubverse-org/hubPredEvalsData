@@ -169,19 +169,12 @@ get_and_save_scores <- function(
     # (anchor-present model lacking a later type) already produced. See #75.
     purrr::reduce(dplyr::full_join, by = c("model_id", by))
 
-  # Add the number of prediction tasks that were scored within each model/by group
-  # After dropping output_type, output_type_id, and value, we are left with model_id
-  # and task id columns.  The number of prediction tasks is the number of distinct
-  # rows within each group.
+  scores <- collapse_output_type_n(
+    scores,
+    unique(metric_name_to_output_type$output_type)
+  )
+
   group_cols <- c("model_id", by)
-  n_tasks_by_group <- model_out_tbl |>
-    dplyr::select(
-      !dplyr::all_of(c("output_type", "output_type_id", "value"))
-    ) |>
-    dplyr::group_by(dplyr::across(dplyr::all_of(group_cols))) |>
-    dplyr::distinct() |>
-    dplyr::summarize(n = dplyr::n())
-  scores <- scores |> dplyr::left_join(n_tasks_by_group, by = group_cols)
 
   # The row order coming out of scoring reflects arrow's parallel, scan-order
   # collect in load_model_out_in_eval_set(), so two runs on identical data emit
@@ -205,6 +198,36 @@ get_and_save_scores <- function(
 }
 
 
+#' Collapse the per-output-type scored counts into a single `n` column.
+#'
+#' Each output type contributes its scored-forecast count as an `n_<output_type>`
+#' column (from `score_model_out(include_count = TRUE)`), sitting just after that
+#' type's metric columns. Where the counts never disagree they are replaced by a
+#' single `n`: a row's counts disagree only when its non-NA values span more than
+#' one number (per-row max and min differ), so a row on which just one output
+#' type contributed a count (NA elsewhere, e.g. a model that submitted a single
+#' type) keeps that lone value. If any row carries two differing counts the
+#' output types genuinely diverge for this target and the per-output-type columns
+#' are left as-is. See #19.
+#'
+#' @param scores The merged wide-format scores, one row per `(model_id, by)`.
+#' @param output_types The output types scored for this target, used to locate
+#'   the `n_<output_type>` columns.
+#' @return `scores` with the count columns collapsed to a single `n`, or
+#'   unchanged when the counts diverge.
+#' @noRd
+collapse_output_type_n <- function(scores, output_types) {
+  n_cols <- intersect(paste0("n_", output_types), names(scores))
+  row_max <- do.call(pmax, c(scores[n_cols], na.rm = TRUE))
+  row_min <- do.call(pmin, c(scores[n_cols], na.rm = TRUE))
+  if (all(row_max == row_min, na.rm = TRUE)) {
+    scores[n_cols] <- NULL
+    scores[["n"]] <- row_max
+  }
+  scores
+}
+
+
 #' Get scores for a target in a given evaluation set for a specific output type.
 #'
 #' If `transform` is set and the output type is transformable
@@ -213,6 +236,9 @@ get_and_save_scores <- function(
 #' `scale` column when `append = TRUE`) is pivoted to wide format here so that
 #' transformed-scale metrics become label-prefixed columns alongside their
 #' natural-scale counterparts.
+#'
+#' `score_model_out()` is imported, not called as `hubEvals::`, so tests can mock it.
+#' @importFrom hubEvals score_model_out
 #' @noRd
 get_scores_for_output_type <- function(
   model_out_tbl,
@@ -252,7 +278,12 @@ get_scores_for_output_type <- function(
     metrics = metrics,
     relative_metrics = relative_metrics,
     baseline = baseline,
-    by = score_by
+    by = score_by,
+    # Count the forecasts actually scored per group (after the oracle join drops
+    # units with no observation), rather than counting submitted predictions.
+    # hubEvals returns this as a `count` column; we carry it as `n_<output_type>`
+    # below and merge it back in get_and_save_scores(). See #19.
+    include_count = TRUE
   )
   # Ordinal pmf with a metric that requires ordinal dispatch (e.g. rps): pass
   # the ordered level vector so scoringutils dispatches as forecast_ordinal
@@ -274,7 +305,19 @@ get_scores_for_output_type <- function(
     score_args$transform_label <- transform_label
     score_args <- c(score_args, transform$args)
   }
-  scores <- do.call(hubEvals::score_model_out, score_args)
+  scores <- do.call(score_model_out, score_args)
+
+  # Set the scored-forecast count aside as `n_<output_type>` before the metric
+  # columns are reshaped below, then re-attach it as the final column so it ends
+  # up immediately after this output type's metrics once the per-output-type
+  # frames are merged. Under `transform_append = TRUE` scoring emits one row per
+  # scale with identical counts, so a distinct on the group + count collapses
+  # them to one row per group. See #19.
+  count_col <- paste0("n_", output_type)
+  group_cols <- c("model_id", by)
+  counts <- dplyr::distinct(scores[c(group_cols, "count")])
+  names(counts)[names(counts) == "count"] <- count_col
+  scores[["count"]] <- NULL
 
   scores <- order_relative_metric_cols(
     scores,
@@ -304,7 +347,7 @@ get_scores_for_output_type <- function(
     scores <- scores[c("model_id", by, ordered_metric_cols)]
   }
 
-  scores
+  dplyr::left_join(scores, counts, by = group_cols)
 }
 
 

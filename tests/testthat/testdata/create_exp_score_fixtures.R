@@ -11,15 +11,6 @@ oracle_output[["target_end_date"]] <- as.Date(oracle_output[[
 ]])
 
 make_score_fixtures_one_set <- function(set_name, model_out_tbl) {
-  # get number of unique levels for each "non-dependent" task id
-  # (i.e., not target end date)
-  nondependent_task_ids <- c("location", "reference_date", "horizon")
-  n_task_id_levels <- purrr::map_int(
-    nondependent_task_ids,
-    ~ length(unique(model_out_tbl[[.x]]))
-  )
-  names(n_task_id_levels) <- nondependent_task_ids
-
   for (by in list(
     NULL,
     "location",
@@ -64,8 +55,17 @@ make_score_fixtures_one_set <- function(set_name, model_out_tbl) {
       ),
       relative_metrics = c("wis", "ae_median"),
       baseline = "FS-base",
-      by = c("model_id", by)
+      by = c("model_id", by),
+      include_count = TRUE
     )
+    # The scored count is per output type and oracle-aware (forecasts with no
+    # observation are not counted). On the complete ecfh oracle every output
+    # type is scored on the same units, so the counts agree and collapse to a
+    # single `n`; take it from the quantile scores. See #19.
+    scored_counts <- as.data.frame(expected_quantile_scores)[
+      c("model_id", by, "count")
+    ]
+    names(scored_counts)[names(scored_counts) == "count"] <- "n"
     expected_quantile_scores <- as.data.frame(expected_quantile_scores)[
       c(
         "model_id",
@@ -80,26 +80,8 @@ make_score_fixtures_one_set <- function(set_name, model_out_tbl) {
     ]
     expected_scores <- expected_mean_scores |>
       dplyr::left_join(expected_median_scores, by = c("model_id", by)) |>
-      dplyr::left_join(expected_quantile_scores, by = c("model_id", by))
-
-    # add number of scored prediction tasks per model/by group
-    if (is.null(by)) {
-      # group only by model_id
-      # n_tasks is n_locations * n_reference_dates * n_horizons
-      n_tasks <- prod(n_task_id_levels)
-    } else if (by %in% nondependent_task_ids) {
-      # group by location, horizon, or target_end_date
-      # n_tasks is the product of the number of levels for the
-      # "non-by" variables.  For example, if by = horizon, n_tasks = n_locations * n_reference_dates
-      n_tasks <- prod(n_task_id_levels[setdiff(nondependent_task_ids, by)])
-    } else {
-      # group by target_end_date
-      # with our setup for test data, n_tasks is the number of locations
-      # each horizon/reference date combination corresponds to a unique target_end_date
-      n_tasks <- n_task_id_levels["location"]
-    }
-    expected_scores <- expected_scores |>
-      dplyr::mutate(n = n_tasks)
+      dplyr::left_join(expected_quantile_scores, by = c("model_id", by)) |>
+      dplyr::left_join(scored_counts, by = c("model_id", by))
 
     save_path <- testthat::test_path("testdata", "expected-scores")
     if (!dir.exists(save_path)) {
