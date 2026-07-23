@@ -13,7 +13,7 @@ Imports:
     cli,
     dplyr (>= 1.1.0),
     hubData,
-    hubEvals (>= 0.3.1.9000),
+    hubEvals (>= 0.4.0),
     hubUtils,
     jsonlite,
     jsonvalidate,
