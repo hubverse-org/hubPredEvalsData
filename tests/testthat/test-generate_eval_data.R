@@ -826,10 +826,10 @@ test_that("diverging per-output-type counts are kept as n_<output_type> columns 
 
 
 test_that("agreeing per-output-type counts collapse to a single n (#19)", {
-  # The common case: counts never disagree across output types. modelA submits
-  # both types on the same units (equal counts); modelB submits only quantile
-  # (mean count NA). Neither row carries two differing counts, so the table
-  # collapses to a single `n` column after the metrics.
+  # The common case: no row holds two counts that differ. modelA submits both
+  # types on the same units (equal counts); modelB submits only quantile, so its
+  # mean count is NA. modelB's row keeps the lone quantile count, and that it
+  # submitted no mean output stays visible as an NA `se_point`.
   hub_path <- test_path("testdata", "ecfh")
   target_id <- "wk inc flu hosp"
   task_groups_w_target <- get_task_groups_w_target(hub_path, target_id, 0)
@@ -877,4 +877,6 @@ test_that("agreeing per-output-type counts collapse to a single n (#19)", {
   expect_false(any(c("n_mean", "n_quantile") %in% names(scores)))
   expect_identical(names(scores), c("model_id", "se_point", "wis", "n"))
   expect_equal(scores$n, c(12, 12))
+  # modelB's missing mean output is still legible without an `n_mean` column.
+  expect_equal(scores$se_point, c(2, NA))
 })

@@ -202,13 +202,16 @@ get_and_save_scores <- function(
 #'
 #' Each output type contributes its scored-forecast count as an `n_<output_type>`
 #' column (from `score_model_out(include_count = TRUE)`), sitting just after that
-#' type's metric columns. Where the counts never disagree they are replaced by a
-#' single `n`: a row's counts disagree only when its non-NA values span more than
-#' one number (per-row max and min differ), so a row on which just one output
-#' type contributed a count (NA elsewhere, e.g. a model that submitted a single
-#' type) keeps that lone value. If any row carries two differing counts the
-#' output types genuinely diverge for this target and the per-output-type columns
-#' are left as-is. See #19.
+#' type's metric columns.
+#'
+#' The counts collapse to a single `n` unless some row holds two counts that
+#' differ. Agreement is judged row by row, over non-NA values only (per-row max
+#' against per-row min). So a row where only one output type contributed a count
+#' keeps that lone value. An NA count means the model submitted nothing for that
+#' output type, which the row's NA metric columns already show.
+#'
+#' If any row does hold two differing counts, the output types genuinely diverge
+#' for this target and the per-output-type columns are left as-is. See #19.
 #'
 #' @param scores The merged wide-format scores, one row per `(model_id, by)`.
 #' @param output_types The output types scored for this target, used to locate
