@@ -1,0 +1,10 @@
+schema_version: https://raw.githubusercontent.com/hubverse-org/hubPredEvalsData/main/inst/schema/v1.0.1/config_schema.json
+rounds_idx: 0
+targets:
+- target_id: clade prop
+  metrics:
+  - se_point
+  disaggregate_by:
+  - location
+eval_sets:
+- eval_set_name: Full history

@@ -1,0 +1,9 @@
+nowcast_date,target_date,location,clade,output_type,output_type_id,value
+2024-10-02,2024-09-30,AL,24A,mean,NA,0.7
+2024-10-02,2024-09-30,AL,24B,mean,NA,0.3
+2024-10-02,2024-09-30,CA,24A,mean,NA,0.4
+2024-10-02,2024-09-30,CA,24B,mean,NA,0.6
+2024-10-02,2024-10-01,AL,24A,mean,NA,0.6
+2024-10-02,2024-10-01,AL,24B,mean,NA,0.4
+2024-10-02,2024-10-01,CA,24A,mean,NA,0.3
+2024-10-02,2024-10-01,CA,24B,mean,NA,0.7

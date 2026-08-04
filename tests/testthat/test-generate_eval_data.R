@@ -36,6 +36,36 @@ test_that("generate_eval_data works, integration test, no relative metrics", {
   )
 })
 
+test_that("generate_eval_data uses a supplied hub_con", {
+  out_path <- withr::local_tempdir()
+  hub_path <- test_path("testdata", "ecfh")
+  config_path <- test_path(
+    "testdata",
+    "test_configs",
+    "config_valid_mean_median_quantile.yaml"
+  )
+
+  # A supplied connection is used as-is: scores match the auto-connect path.
+  generate_eval_data(
+    hub_path = hub_path,
+    config_path = config_path,
+    out_path = out_path,
+    hub_con = hubData::connect_hub(hub_path)
+  )
+  check_exp_scores_for_set(out_path, "Full season")
+
+  # Supplying hub_con suppresses the auto-connect from hub_path: a bogus
+  # connection is used rather than silently reopened, so the run fails on it.
+  expect_error(
+    generate_eval_data(
+      hub_path = hub_path,
+      config_path = config_path,
+      out_path = out_path,
+      hub_con = "not a connection"
+    )
+  )
+})
+
 test_that("generate_eval_data works, integration test, with relative metrics", {
   out_path <- withr::local_tempdir()
   hub_path <- test_path("testdata", "ecfh")
@@ -686,4 +716,45 @@ test_that("scores.csv row order is deterministic regardless of input row order (
       info = paste("by =", deparse(by))
     )
   }
+})
+
+
+test_that("generate_eval_data works for a hub with no target key (#87)", {
+  # A nowcast-shaped hub: one target identified by target_id alone
+  # (target_keys: null), so neither model output nor oracle output carries a
+  # target column and there is nothing to filter on.
+  hub_path <- test_path("testdata", "nowcast")
+  config_path <- test_path(
+    "testdata",
+    "test_configs",
+    "config_valid_nowcast.yaml"
+  )
+  out_path <- withr::local_tempdir()
+
+  generate_eval_data(
+    hub_path = hub_path,
+    config_path = config_path,
+    out_path = out_path
+  )
+
+  # modelA is off by 0.1 on every row and modelB by 0.2, so se_point is
+  # 0.01 and 0.04, over all 8 forecasts and 4 per location.
+  scores <- read.csv(
+    file.path(out_path, "clade prop", "Full history", "scores.csv")
+  )
+  expect_identical(names(scores), c("model_id", "se_point", "n"))
+  expect_equal(scores$model_id, c("modelA", "modelB"))
+  expect_equal(scores$se_point, c(0.01, 0.04))
+  expect_equal(scores$n, c(8L, 8L))
+
+  by_location <- read.csv(
+    file.path(out_path, "clade prop", "Full history", "location", "scores.csv")
+  )
+  expect_identical(
+    names(by_location),
+    c("model_id", "location", "se_point", "n")
+  )
+  expect_equal(by_location$location, c("AL", "CA", "AL", "CA"))
+  expect_equal(by_location$se_point, c(0.01, 0.01, 0.04, 0.04))
+  expect_equal(by_location$n, c(4L, 4L, 4L, 4L))
 })

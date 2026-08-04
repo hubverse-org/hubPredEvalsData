@@ -1,5 +1,13 @@
 # hubPredEvalsData (development version)
 
+## Bug Fixes
+
+* `generate_eval_data()` now works on hubs whose target is identified by `target_id` alone, with no target key task id variable (`target_keys: null`), as used by nowcast hubs. Previously these failed partway through the run with an error about converting `NULL` to a symbol (#87).
+
+## Performance
+
+* Evaluation data generation is faster. The hub connection is opened once and reused across targets and evaluation sets rather than reopened for every combination, and oracle output is subset to the target before scoring (#82).
+
 # hubPredEvalsData 1.2.0
 
 ## New Features
