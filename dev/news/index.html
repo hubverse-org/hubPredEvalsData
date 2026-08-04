@@ -33,6 +33,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="hubpredevalsdata-development-version">hubPredEvalsData (development version)<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li>The number of predictions scored (<code>n</code>) in <code>scores.csv</code> now counts only forecasts that had a corresponding observation to score against, rather than every submitted prediction, correcting an overcount wherever a model submitted predictions for units with no observation. In the rare case where this count differs across a target’s output types, <code>scores.csv</code> reports a separate <code>n_&lt;output_type&gt;</code> column per output type in place of the single <code>n</code> (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/19" class="external-link">#19</a>).</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.0" id="hubpredevalsdata-120">hubPredEvalsData 1.2.0<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-120"></a></h2>
