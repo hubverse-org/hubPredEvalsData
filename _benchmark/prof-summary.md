@@ -51,18 +51,22 @@ yet the path sheds far more than the 16 s it ever spent computing. `score()`
 is still the single largest self-time cost, so the merge
 (hubverse-org/hubEvals#144) remains the prize.
 
-## Connect once + oracle subset (#82) — `ak/connect-once/82`, hubEvals 0.4.0, scoringutils 2.2.0
+## Connect once + oracle subset (#82) — `ak/connect-once/82@3e6f669`, hubEvals 0.4.0, scoringutils 2.2.0
 
-554 s wall-clock, down from 583 s at the same hubEvals. Memory flat (R heap
-~4.0 GB, Arrow ~1.15 GB; unchanged, because the collect-once hoist was
+569.2 s wall-clock, down from 582.6 s at the same hubEvals. Memory flat (R heap
+~3.9 GB, Arrow ~1.16 GB; unchanged, because the collect-once hoist was
 deliberately not done). These are the `gc()`/Arrow-pool peaks, not the
 `/usr/bin/time -l` RSS the baseline reports, so not comparable to that 6.85 GB.
 
-The ~29 s saving is on the load-and-join side, not the statistics. The hub
-connection is opened once and reused (3 `connect_hub()` calls → 1 for this
-one-target config), and the oracle is subset to the target before scoring, so
-each `score_model_out()` join drops the other target's oracle rows:
-`get_and_save_scores` falls 592 → 566 s, within it `score()` 171 → 163 s. The
-relative-skill path is untouched by #82 and still dominates (~57%); the small
-differences there (356.5 → 344.7 s) are run-to-run `forderv` noise, not a shape
-change. The pairwise merge remains the top cost, for #83 / hubEvals#144.
+The saving is on the load-and-join side, not the statistics. The hub connection
+is opened once and reused (3 `connect_hub()` calls → 1 for this one-target
+config), and the oracle is subset to the target before scoring, so each
+`score_model_out()` join drops the other targets' oracle rows: `score()` falls
+171 → 162.8 s, reproduced across two runs of this branch.
+
+Wall-clock alone does not resolve this change. The relative-skill path is ~59%
+of the run and untouched by #82, and its `forderv` ordering varies by tens of
+seconds between runs: 344.7 / 358.1 / 374.1 across three runs of this branch,
+against 356.5 on main. An earlier run recorded 553.6 s, which caught a fast
+pairwise and so overstated the saving as ~29 s; `score()` is the stable signal.
+The pairwise merge remains the top cost, for #83 / hubEvals#144.
