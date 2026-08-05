@@ -2,4 +2,5 @@
 
 export(generate_eval_data)
 export(generate_predevals_options)
+importFrom(hubEvals,score_model_out)
 importFrom(rlang,"%||%")
