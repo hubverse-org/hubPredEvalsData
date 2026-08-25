@@ -219,3 +219,19 @@ test_that("load_model_out_in_eval_set succeeds, min round and task id filters", 
     expected_model_out_tbl
   )
 })
+
+
+test_that("load_model_out_in_eval_set uses a supplied hub_con", {
+  hub_path <- test_path("testdata", "ecfh")
+
+  # A supplied connection is used as-is, rather than hub_path being reopened.
+  expect_error(
+    load_model_out_in_eval_set(
+      hub_path = hub_path,
+      target_id = "wk flu hosp rate category",
+      eval_set = list(eval_set_name = "all"),
+      rounds_idx = 0,
+      hub_con = "not a connection"
+    )
+  )
+})

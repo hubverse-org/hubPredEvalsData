@@ -12,6 +12,9 @@
 #' `hub_path` via [hubData::connect_target_oracle_output()]. Supplying a
 #' pre-loaded data frame remains supported for back-compat with callers
 #' that load oracle data themselves.
+#' @param hub_con Optional hub connection, as returned by
+#' [hubData::connect_hub()]. When `NULL` (the default), a connection is opened
+#' from `hub_path` and reused for every target and evaluation set.
 #'
 #' @section Output:
 #' For each `(target, eval_set, disaggregation)` requested in the config, a
@@ -34,9 +37,13 @@ generate_eval_data <- function(
   hub_path,
   config_path,
   out_path,
-  oracle_output = NULL
+  oracle_output = NULL,
+  hub_con = NULL
 ) {
   config <- read_predevals_config(hub_path, config_path)
+  if (is.null(hub_con)) {
+    hub_con <- hubData::connect_hub(hub_path)
+  }
   if (is.null(oracle_output)) {
     oracle_output <- hubData::connect_target_oracle_output(hub_path) |>
       dplyr::collect()
@@ -47,7 +54,14 @@ generate_eval_data <- function(
   # keys plus `oracle_value`, so drop it before scoring. A no-op when absent.
   oracle_output$as_of <- NULL
   for (target in config$targets) {
-    generate_target_eval_data(hub_path, config, out_path, oracle_output, target)
+    generate_target_eval_data(
+      hub_path,
+      config,
+      out_path,
+      oracle_output,
+      target,
+      hub_con
+    )
   }
 }
 
@@ -66,7 +80,8 @@ generate_target_eval_data <- function(
   config,
   out_path,
   oracle_output,
-  target
+  target,
+  hub_con
 ) {
   target_id <- target$target_id
   metrics <- target$metrics
@@ -88,12 +103,18 @@ generate_target_eval_data <- function(
     metrics
   )
 
+  # Subset the oracle to this target once. It arrives holding every target's
+  # rows, but the scoring join only ever matches this target's, so the others
+  # are dead weight on every (eval_set x by) join. See #82.
+  oracle_output <- filter_to_target(oracle_output, task_groups_w_target)
+
   for (eval_set in eval_sets) {
     model_out_tbl <- load_model_out_in_eval_set(
       hub_path,
-      target$target_id,
+      target_id,
       eval_set,
-      config$rounds_idx
+      config$rounds_idx,
+      hub_con = hub_con
     )
     if (nrow(model_out_tbl) == 0) {
       cli::cli_inform(

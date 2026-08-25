@@ -3,6 +3,11 @@
 ## Bug Fixes
 
 * The number of predictions scored (`n`) in `scores.csv` now counts only forecasts that had a corresponding observation to score against, rather than every submitted prediction, correcting an overcount wherever a model submitted predictions for units with no observation. In the rare case where this count differs across a target's output types, `scores.csv` reports a separate `n_<output_type>` column per output type in place of the single `n` (#19).
+* `generate_eval_data()` now works on hubs whose target is identified by `target_id` alone, with no target key task id variable (`target_keys: null`), as used by nowcast hubs. Previously these failed partway through the run with an error about converting `NULL` to a symbol (#87).
+
+## Performance
+
+* Evaluation data generation is faster. The hub connection is opened once and reused across targets and evaluation sets rather than reopened for every combination, and oracle output is subset to the target before scoring (#82).
 
 # hubPredEvalsData 1.2.0
 

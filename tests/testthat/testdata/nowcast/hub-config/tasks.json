@@ -1,0 +1,55 @@
+{
+    "schema_version": "https://raw.githubusercontent.com/hubverse-org/schemas/main/v3.0.1/tasks-schema.json",
+    "rounds": [
+        {
+            "round_id_from_variable": true,
+            "round_id": "nowcast_date",
+            "model_tasks": [
+                {
+                    "task_ids": {
+                        "nowcast_date": {
+                            "required": ["2024-10-02"],
+                            "optional": null
+                        },
+                        "target_date": {
+                            "required": ["2024-09-30", "2024-10-01"],
+                            "optional": null
+                        },
+                        "location": {
+                            "required": ["AL", "CA"],
+                            "optional": null
+                        },
+                        "clade": {
+                            "required": ["24A", "24B"],
+                            "optional": null
+                        }
+                    },
+                    "output_type": {
+                        "mean": {
+                            "output_type_id": {
+                                "required": null,
+                                "optional": ["NA"]
+                            },
+                            "value": {
+                                "type": "double",
+                                "minimum": 0,
+                                "maximum": 1
+                            }
+                        }
+                    },
+                    "target_metadata": [
+                        {
+                            "target_id": "clade prop",
+                            "target_name": "Daily nowcasted clade proportions",
+                            "target_units": "proportion",
+                            "target_keys": null,
+                            "target_type": "compositional",
+                            "is_step_ahead": true,
+                            "time_unit": "day"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

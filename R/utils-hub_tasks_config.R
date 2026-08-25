@@ -96,6 +96,30 @@ is_target_ordinal <- function(task_groups_w_target) {
 }
 
 
+#' Filter model output or oracle output down to a single target.
+#'
+#' `data` may be a hub connection or an already-collected data frame, so both
+#' sides of the scoring join are filtered the same way.
+#' @noRd
+filter_to_target <- function(data, task_groups_w_target) {
+  # The task_groups_w_target has been filtered to a single target,
+  # so we can just read the target_keys of the first entry
+  target_keys <- task_groups_w_target[[1]]$target_metadata[[1]]$target_keys
+
+  # A null `target_keys` means the hub collects a single target and omits the
+  # column rather than repeating one value on every row, leaving nothing to
+  # filter out (#87). Schemas before v5.0.0 allow more than one key.
+  for (target_key_name in names(target_keys)) {
+    data <- dplyr::filter(
+      data,
+      .data[[target_key_name]] == target_keys[[target_key_name]]
+    )
+  }
+
+  data
+}
+
+
 #' Get the output type id values for a given output type, in the order they
 #' appear in the hub's tasks.json. The output type may appear in multiple task
 #' groups, and the output type id values in those groups may differ as long as

@@ -215,3 +215,42 @@ test_that("get_output_type_ids_for_type works", {
     "have different order across task groups."
   )
 })
+
+
+test_that("filter_to_target filters on the target key", {
+  task_groups_w_target <- list(
+    list(
+      target_metadata = list(
+        list(
+          target_id = "wk inc flu hosp",
+          target_keys = list(target = "wk inc flu hosp")
+        )
+      )
+    )
+  )
+  data <- data.frame(
+    target = c("wk inc flu hosp", "wk flu hosp rate change"),
+    oracle_value = c(1, 2)
+  )
+
+  expect_equal(
+    filter_to_target(data, task_groups_w_target),
+    data.frame(target = "wk inc flu hosp", oracle_value = 1)
+  )
+})
+
+
+test_that("filter_to_target is a no-op when target_keys is NULL (#87)", {
+  # A hub collecting a single target omits the target column rather than
+  # repeating one value on every row, so there is nothing to filter on.
+  task_groups_w_target <- list(
+    list(
+      target_metadata = list(
+        list(target_id = "wk inc flu hosp", target_keys = NULL)
+      )
+    )
+  )
+  data <- data.frame(location = c("US", "01"), oracle_value = c(1, 2))
+
+  expect_equal(filter_to_target(data, task_groups_w_target), data)
+})

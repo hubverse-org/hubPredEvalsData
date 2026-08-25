@@ -4,7 +4,13 @@
 \alias{generate_eval_data}
 \title{Generate evaluation data for a hub}
 \usage{
-generate_eval_data(hub_path, config_path, out_path, oracle_output = NULL)
+generate_eval_data(
+  hub_path,
+  config_path,
+  out_path,
+  oracle_output = NULL,
+  hub_con = NULL
+)
 }
 \arguments{
 \item{hub_path}{A path to the hub.}
@@ -19,6 +25,10 @@ evaluation. When \code{NULL} (the default), oracle output is discovered from
 \code{hub_path} via \code{\link[hubData:connect_target_oracle_output]{hubData::connect_target_oracle_output()}}. Supplying a
 pre-loaded data frame remains supported for back-compat with callers
 that load oracle data themselves.}
+
+\item{hub_con}{Optional hub connection, as returned by
+\code{\link[hubData:connect_hub]{hubData::connect_hub()}}. When \code{NULL} (the default), a connection is opened
+from \code{hub_path} and reused for every target and evaluation set.}
 }
 \description{
 Scores each target configured in the predevals config against its oracle

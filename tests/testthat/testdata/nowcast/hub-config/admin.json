@@ -1,0 +1,16 @@
+{
+    "schema_version": "https://raw.githubusercontent.com/hubverse-org/schemas/main/v3.0.1/admin-schema.json",
+    "name": "Test Nowcast Hub",
+    "maintainer": "hubPredEvalsData",
+    "contact": {
+        "name": "Test",
+        "email": "test@example.com"
+    },
+    "repository": {
+        "host": "github",
+        "owner": "hubverse-org",
+        "name": "hubPredEvalsData"
+    },
+    "file_format": ["csv"],
+    "timezone": "US/Eastern"
+}

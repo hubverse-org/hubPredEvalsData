@@ -8,8 +8,8 @@
 check_exp_scores_for_set <- function(
   out_path,
   set_name,
-  model_out_tbl,
-  oracle_output,
+  model_out_tbl = NULL,
+  oracle_output = NULL,
   include_rel = FALSE
 ) {
   # check that the output files were created and have the expected contents
