@@ -39,6 +39,12 @@
 <div class="section level3">
 <h3 id="bug-fixes-development-version">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
 <ul><li>The number of predictions scored (<code>n</code>) in <code>scores.csv</code> now counts only forecasts that had a corresponding observation to score against, rather than every submitted prediction, correcting an overcount wherever a model submitted predictions for units with no observation. In the rare case where this count differs across a target’s output types, <code>scores.csv</code> reports a separate <code>n_&lt;output_type&gt;</code> column per output type in place of the single <code>n</code> (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/19" class="external-link">#19</a>).</li>
+<li>
+<code><a href="../reference/generate_eval_data.html">generate_eval_data()</a></code> now works on hubs whose target is identified by <code>target_id</code> alone, with no target key task id variable (<code>target_keys: null</code>), as used by nowcast hubs. Previously these failed partway through the run with an error about converting <code>NULL</code> to a symbol (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/87" class="external-link">#87</a>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="performance-development-version">Performance<a class="anchor" aria-label="anchor" href="#performance-development-version"></a></h3>
+<ul><li>Evaluation data generation is faster. The hub connection is opened once and reused across targets and evaluation sets rather than reopened for every combination, and oracle output is subset to the target before scoring (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/82" class="external-link">#82</a>).</li>
 </ul></div>
 </div>
     <div class="section level2">

@@ -44,7 +44,13 @@ data and writes wide-format score tables to disk.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">generate_eval_data</span><span class="op">(</span><span class="va">hub_path</span>, <span class="va">config_path</span>, <span class="va">out_path</span>, oracle_output <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">generate_eval_data</span><span class="op">(</span></span>
+<span>  <span class="va">hub_path</span>,</span>
+<span>  <span class="va">config_path</span>,</span>
+<span>  <span class="va">out_path</span>,</span>
+<span>  oracle_output <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  hub_con <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,6 +76,12 @@ evaluation. When <code>NULL</code> (the default), oracle output is discovered fr
 <code>hub_path</code> via <code><a href="https://hubverse-org.github.io/hubData/reference/connect_target_oracle_output.html" class="external-link">hubData::connect_target_oracle_output()</a></code>. Supplying a
 pre-loaded data frame remains supported for back-compat with callers
 that load oracle data themselves.</p></dd>
+
+
+<dt id="arg-hub-con">hub_con<a class="anchor" aria-label="anchor" href="#arg-hub-con"></a></dt>
+<dd><p>Optional hub connection, as returned by
+<code><a href="https://hubverse-org.github.io/hubData/reference/connect_hub.html" class="external-link">hubData::connect_hub()</a></code>. When <code>NULL</code> (the default), a connection is opened
+from <code>hub_path</code> and reused for every target and evaluation set.</p></dd>
 
 </dl></div>
     <div class="section level2">
