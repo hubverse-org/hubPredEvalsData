@@ -70,3 +70,46 @@ seconds between runs: 344.7 / 358.1 / 374.1 across three runs of this branch,
 against 356.5 on main. An earlier run recorded 553.6 s, which caught a fast
 pairwise and so overstated the saving as ~29 s; `score()` is the stable signal.
 The pairwise merge remains the top cost, for #83 / hubEvals#144.
+
+## hubEvals 0.5.0 + scoringutils 2.3.0: `ak/release/1.3.0@a529d97`
+
+240.4 s wall-clock, down from 569.2 s. Same package code as the #82 entry (the
+release commit changes only `DESCRIPTION` and `NEWS.md`); the only change is
+hubEvals 0.4.0 to 0.5.0, which raises scoringutils from 2.2.0 to 2.3.0. Peak RSS
+by `/usr/bin/time -l` is 5.09 GB, down from the baseline's 6.85 GB. R heap peak
+3.4 GB (was 3.9 GB); Arrow pool peak 1.62 GB (was 1.16 GB).
+
+| | total | % |
+|---|---|---|
+| `score()` | 187.4 s | 62.4% |
+| ├─ of which `assert_forecast` | 75.7 s | 25.2% |
+| ├─ of which `apply_metrics` | 72.6 s | 24.2% |
+| │  └─ of which `quantile_to_interval` | 70.5 s | 23.5% |
+| `transform_quantile_model_out` (`as_forecast_quantile()`) | 66.8 s | 22.2% |
+| Load (`load_model_out_in_eval_set`, all calls) | 31.1 s | 10.4% |
+| Relative skill (`get_pairwise_comparisons`) | 5.0 s | 1.7% |
+| Write | ~0 s | ~0% |
+
+The pairwise merge is gone as a cost. Relative skill falls from 356.5 s (57.1%)
+to 5.0 s (1.7%) and `merge.data.table` to 0.7 s: this is
+hubverse-org/hubEvals#144 landing, through scoringutils 2.3.0.
+
+`forderv` is still the single largest self-time cost (31.2%), but it has moved.
+Two thirds of its samples now sit under `score()`: half under
+`quantile_to_interval` inside `apply_metrics` (`wis` and `interval_coverage_95`
+both convert the quantile forecast to intervals), a quarter under
+`assert_forecast`. The remaining third is under `transform_quantile_model_out`,
+in `as_forecast_quantile()` validation. None of it is in the pairwise path.
+
+`score()` reads 187.4 s against 162.8 s in the #82 entry. Whether that is
+scoringutils 2.3.0 or run-to-run variance is unresolved from a single run.
+
+Load is unchanged in absolute terms (31.1 s against 32.5 s at baseline) and so
+is now a tenth of the run rather than a twentieth. With relative skill gone the
+run is score-bound, and the remaining hotspots (forecast validation, the
+quantile-to-interval ordering, the `as_forecast_quantile()` conversion) are all
+upstream of this package.
+
+Note that `results.csv` also holds a run of the same stack in the amd64 dev
+image under emulation on this machine (472.5 s). It is not comparable with the
+native rows and records only that the stack installs and runs in the image.

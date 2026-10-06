@@ -1,4 +1,4 @@
-# hubPredEvalsData (development version)
+# hubPredEvalsData 1.3.0
 
 ## Bug Fixes
 
