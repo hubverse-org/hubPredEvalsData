@@ -2,6 +2,8 @@
 
 ## hubPredEvalsData (development version)
 
+## hubPredEvalsData 1.3.0
+
 ### Bug Fixes
 
 - The number of predictions scored (`n`) in `scores.csv` now counts only
