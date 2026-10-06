@@ -6,7 +6,13 @@ data and writes wide-format score tables to disk.
 ## Usage
 
 ``` r
-generate_eval_data(hub_path, config_path, out_path, oracle_output = NULL)
+generate_eval_data(
+  hub_path,
+  config_path,
+  out_path,
+  oracle_output = NULL,
+  hub_con = NULL
+)
 ```
 
 ## Arguments
@@ -31,6 +37,13 @@ generate_eval_data(hub_path, config_path, out_path, oracle_output = NULL)
   [`hubData::connect_target_oracle_output()`](https://hubverse-org.github.io/hubData/reference/connect_target_oracle_output.html).
   Supplying a pre-loaded data frame remains supported for back-compat
   with callers that load oracle data themselves.
+
+- hub_con:
+
+  Optional hub connection, as returned by
+  [`hubData::connect_hub()`](https://hubverse-org.github.io/hubData/reference/connect_hub.html).
+  When `NULL` (the default), a connection is opened from `hub_path` and
+  reused for every target and evaluation set.
 
 ## Output
 
