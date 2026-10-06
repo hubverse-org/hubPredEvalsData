@@ -9,7 +9,9 @@
 
 ## Performance
 
-* Evaluation data generation is faster. The hub connection is opened once and reused across targets and evaluation sets rather than reopened for every combination, and oracle output is subset to the target before scoring (#82).
+* Evaluation data generation is substantially faster and uses less memory.
+  * Relative skill no longer dominates the run. hubEvals 0.5.0 and scoringutils 2.3.0 are now required, and in the FluSight benchmark wall-clock time fell from 569 s to 240 s and peak memory from 6.85 GB to 5.1 GB (#93).
+  * The hub connection is opened once and reused across targets and evaluation sets rather than reopened for every combination, and oracle output is subset to the target before scoring (#82).
 
 # hubPredEvalsData 1.2.0
 
