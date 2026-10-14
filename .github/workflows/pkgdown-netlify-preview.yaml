@@ -8,6 +8,12 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish Site (uncheck for a dry run)"
+        type: boolean
+        required: false
+        default: true
 
 name: pkgdown-pr-preview
 
@@ -22,7 +28,7 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
       NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
-      isPush: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+      PUBLISH: ${{ github.event_name == 'push' || github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish) }}
     permissions:
       contents: write
       pull-requests: write
@@ -48,7 +54,7 @@ jobs:
         shell: Rscript {0}
 
       - name: Deploy production to GitHub pages 🚀
-        if: contains(env.isPush, 'true')
+        if: contains(env.PUBLISH, 'true')
         uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
         with:
           clean: false
@@ -63,7 +69,8 @@ jobs:
             echo 'dir=./docs' >> $GITHUB_OUTPUT
           fi
       - name: Deploy PR preview to Netlify
-        if: contains(env.isPush, 'false')
+        # Dependabot PRs cannot read the Netlify secrets
+        if: contains(env.PUBLISH, 'false') && github.event.pull_request.user.login != 'dependabot[bot]'
         id: netlify-deploy
         uses: nwtgck/actions-netlify@d22a32a27c918fe470bbc562e984f80ec48c2668 # v4.0.0
         with:
