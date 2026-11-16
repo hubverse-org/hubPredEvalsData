@@ -108,20 +108,52 @@ generate_target_eval_data <- function(
   # are dead weight on every (eval_set x by) join. See #82.
   oracle_output <- filter_to_target(oracle_output, task_groups_w_target)
 
-  for (eval_set in eval_sets) {
-    model_out_tbl <- load_model_out_in_eval_set(
+  # Per-forecast scores don't depend on the eval set or the disaggregation, so
+  # each forecast is scored once and its scores are then summarized for every
+  # eval set and `by` it appears in. See #80 and #83.
+  eval_set_forecasts <- purrr::map(eval_sets, function(eval_set) {
+    load_model_out_in_eval_set(
       hub_path,
       target_id,
       eval_set,
       config$rounds_idx,
       hub_con = hub_con
-    )
-    if (nrow(model_out_tbl) == 0) {
+    ) |>
+      get_forecast_keys()
+  })
+  row_scores <- score_forecasts_once(
+    hub_con = hub_con,
+    forecast_keys = eval_set_forecasts,
+    oracle_output = oracle_output,
+    metric_name_to_output_type = metric_name_to_output_type,
+    transform = transform,
+    task_groups_w_target = task_groups_w_target
+  )
+
+  for (i in seq_along(eval_sets)) {
+    eval_set <- eval_sets[[i]]
+    forecasts <- eval_set_forecasts[[i]]
+    if (nrow(forecasts) == 0) {
       cli::cli_inform(
         "No model output data found for target {.val {target_id}}
          in evaluation set {.val {eval_set$eval_set_name}}."
       )
       next
+    }
+
+    set_row_scores <- get_row_scores_in_eval_set(row_scores, forecasts)
+    model_out_tbl <- NULL
+    if (is.null(set_row_scores)) {
+      # Some output type has forecasts in this eval set but nothing to score
+      # (for example, no oracle values yet). Score the eval set directly, as
+      # before, so this case behaves exactly as it did.
+      model_out_tbl <- load_model_out_in_eval_set(
+        hub_path,
+        target_id,
+        eval_set,
+        config$rounds_idx,
+        hub_con = hub_con
+      )
     }
 
     # calculate overall scores followed by scores disaggregated by a task ID variable.
@@ -137,10 +169,174 @@ generate_target_eval_data <- function(
         by = by,
         out_path = out_path,
         transform = transform,
-        task_groups_w_target = task_groups_w_target
+        task_groups_w_target = task_groups_w_target,
+        row_scores = set_row_scores
       )
     }
   }
+}
+
+
+#' The forecasts in a model output table: its distinct rows without the
+#' `output_type_id` and `value` columns, i.e. one row per model, task and
+#' output type.
+#' @noRd
+get_forecast_keys <- function(model_out_tbl) {
+  model_out_tbl |>
+    dplyr::select(!dplyr::any_of(c("output_type_id", "value"))) |>
+    dplyr::distinct()
+}
+
+
+#' Score every forecast that is in at least one eval set, once
+#'
+#' Model output is loaded and scored one model at a time, which keeps memory
+#' use to roughly one model's forecasts. Per-forecast scores don't depend on
+#' which other forecasts are scored alongside them, so this gives the same
+#' scores as scoring each eval set as a whole.
+#'
+#' @param forecast_keys A list of forecast key tables (see
+#'   `get_forecast_keys()`), one per eval set.
+#' @return A named list with one element per output type: the per-forecast
+#'   scores from `score_model_out(summarize = FALSE)`, sorted by forecast, or
+#'   `NULL` if there was nothing to score.
+#' @noRd
+score_forecasts_once <- function(
+  hub_con,
+  forecast_keys,
+  oracle_output,
+  metric_name_to_output_type,
+  transform,
+  task_groups_w_target
+) {
+  output_types <- unique(metric_name_to_output_type$output_type)
+  all_keys <- dplyr::bind_rows(forecast_keys) |> dplyr::distinct()
+  row_scores <- purrr::set_names(
+    vector("list", length(output_types)),
+    output_types
+  )
+  if (nrow(all_keys) == 0) {
+    return(row_scores)
+  }
+
+  target_con <- filter_to_target(hub_con, task_groups_w_target)
+  for (model in sort(unique(all_keys$model_id))) {
+    model_keys <- all_keys[all_keys$model_id == model, , drop = FALSE]
+    model_out_tbl <- target_con |>
+      dplyr::filter(.data[["model_id"]] == !!model) |>
+      dplyr::collect() |>
+      dplyr::semi_join(model_keys, by = names(model_keys))
+
+    for (output_type in output_types) {
+      type_rows <- model_out_tbl[
+        model_out_tbl$output_type == output_type,
+        ,
+        drop = FALSE
+      ]
+      if (nrow(type_rows) == 0) {
+        next
+      }
+      # relative skill and `by` only apply when summarizing
+      score_args <- get_score_args(
+        output_type = output_type,
+        metric_name_to_output_type = metric_name_to_output_type,
+        relative_metrics = NULL,
+        baseline = NULL,
+        by = NULL,
+        transform = transform,
+        task_groups_w_target = task_groups_w_target
+      )
+      score_args$model_out_tbl <- type_rows
+      score_args$oracle_output <- oracle_output
+      score_args$summarize <- FALSE
+      scores <- score_or_skip_unobserved(score_args)
+      if (!is.null(scores)) {
+        row_scores[[output_type]] <- c(row_scores[[output_type]], list(scores))
+      }
+    }
+  }
+
+  purrr::map(row_scores, bind_row_scores)
+}
+
+
+#' Score one model's forecasts, returning `NULL` if none can be scored
+#'
+#' scoringutils errors when no forecast has every value it needs, typically
+#' because none have an oracle value yet. Scored together with other models,
+#' those forecasts would just be dropped, so here the model is skipped.
+#' @noRd
+score_or_skip_unobserved <- function(score_args) {
+  tryCatch(
+    do.call(score_model_out, score_args),
+    error = function(e) {
+      if (grepl("no forecasts\\s+are\\s+left", conditionMessage(e))) {
+        return(NULL)
+      }
+      stop(e)
+    }
+  )
+}
+
+
+#' Combine per-model scores into one table, sorted by forecast
+#'
+#' Sorting makes the order of the scores, and so the order in which they are
+#' summed when summarizing, the same on every run.
+#' @noRd
+bind_row_scores <- function(score_list) {
+  if (length(score_list) == 0) {
+    return(NULL)
+  }
+  metrics <- attr(score_list[[1]], "metrics")
+  scores <- dplyr::bind_rows(score_list)
+  sort_cols <- setdiff(names(scores), metrics)
+  scores <- dplyr::arrange(scores, dplyr::across(dplyr::all_of(sort_cols)))
+  copy_score_attrs(scores, score_list[[1]])
+}
+
+
+#' Copy the attributes `score_model_out()` sets on per-forecast scores
+#'
+#' `summarize_model_out_scores()` needs them, and `bind_rows()` and
+#' `semi_join()` don't always keep them.
+#' @noRd
+copy_score_attrs <- function(to, from) {
+  for (name in c("metrics", "transform_append")) {
+    attr(to, name) <- attr(from, name)
+  }
+  to
+}
+
+
+#' The per-forecast scores for the forecasts in one eval set
+#'
+#' @return A named list like `row_scores`, restricted to the eval set, or
+#'   `NULL` if some output type has forecasts in the eval set but no scores.
+#' @noRd
+get_row_scores_in_eval_set <- function(row_scores, forecasts) {
+  set_scores <- list()
+  for (output_type in names(row_scores)) {
+    type_forecasts <- forecasts[
+      forecasts$output_type == output_type,
+      ,
+      drop = FALSE
+    ]
+    scores <- row_scores[[output_type]]
+    if (nrow(type_forecasts) == 0 || is.null(scores)) {
+      return(NULL)
+    }
+    key_cols <- intersect(
+      setdiff(names(type_forecasts), "output_type"),
+      names(scores)
+    )
+    in_set <- dplyr::semi_join(scores, type_forecasts, by = key_cols)
+    if (nrow(in_set) == 0) {
+      return(NULL)
+    }
+    set_scores[[output_type]] <- copy_score_attrs(in_set, scores)
+  }
+  set_scores
 }
 
 
@@ -152,6 +348,10 @@ generate_target_eval_data <- function(
 #' out_path/target_id/eval_set_name/scores.csv
 #' - If by is not NULL, the scores are saved in
 #' out_path/target_id/eval_set_name/by/scores.csv
+#'
+#' If `row_scores` is given (per-forecast scores for the eval set, by output
+#' type; see `score_forecasts_once()`), those are summarized and
+#' `model_out_tbl` is not used. Otherwise `model_out_tbl` is scored.
 #' @noRd
 get_and_save_scores <- function(
   model_out_tbl,
@@ -164,7 +364,8 @@ get_and_save_scores <- function(
   by,
   out_path,
   transform,
-  task_groups_w_target
+  task_groups_w_target,
+  row_scores = NULL
 ) {
   # Iterate over the output types and calculate scores for each
   scores <- purrr::map(
@@ -180,7 +381,8 @@ get_and_save_scores <- function(
       by = by,
       output_type = .x,
       transform = transform,
-      task_groups_w_target = task_groups_w_target
+      task_groups_w_target = task_groups_w_target,
+      row_scores = row_scores[[.x]]
     )
   ) |>
     # Union the (model_id, by) keys across output types with a full join: a
@@ -261,8 +463,12 @@ collapse_output_type_n <- function(scores, output_types) {
 #' transformed-scale metrics become label-prefixed columns alongside their
 #' natural-scale counterparts.
 #'
+#' If `row_scores` (per-forecast scores for this output type) is given, they
+#' are summarized with `summarize_model_out_scores()`, which gives the same
+#' result as scoring `model_out_tbl` with the same arguments.
+#'
 #' `score_model_out()` is imported, not called as `hubEvals::`, so tests can mock it.
-#' @importFrom hubEvals score_model_out
+#' @importFrom hubEvals score_model_out summarize_model_out_scores
 #' @noRd
 get_scores_for_output_type <- function(
   model_out_tbl,
@@ -275,61 +481,39 @@ get_scores_for_output_type <- function(
   by,
   output_type,
   transform,
-  task_groups_w_target
+  task_groups_w_target,
+  row_scores = NULL
 ) {
-  metrics <- metric_name_to_output_type$metric[
-    metric_name_to_output_type$output_type == output_type
-  ]
-  if (!is.null(relative_metrics)) {
-    relative_metrics <- relative_metrics[relative_metrics %in% metrics]
-  }
-
-  apply_transform <- !is.null(transform) &&
-    output_type %in% get_transformable_output_types()
-  transform_append <- apply_transform && isTRUE(transform$append %||% TRUE)
-  transform_label <- if (apply_transform) get_transform_label(transform)
-  # When `append = TRUE`, scoringutils emits both natural- and transformed-scale
-  # rows keyed by a `scale` column. We must include `"scale"` in `by` so
-  # hubEvals' summarise step (which averages everything not in `by`) doesn't
-  # collapse the two scales together. We then pivot that long format to wide.
-  # With `append = FALSE`, only transformed rows are produced and no `scale`
-  # column is emitted, so there's nothing to keep separated.
-  score_by <- c("model_id", by, if (transform_append) "scale")
-  score_args <- list(
-    model_out_tbl = model_out_tbl |>
-      dplyr::filter(.data[["output_type"]] == !!output_type),
-    oracle_output = oracle_output,
-    metrics = metrics,
+  score_args <- get_score_args(
+    output_type = output_type,
+    metric_name_to_output_type = metric_name_to_output_type,
     relative_metrics = relative_metrics,
     baseline = baseline,
-    by = score_by,
-    # Count the forecasts actually scored per group (after the oracle join drops
-    # units with no observation), rather than counting submitted predictions.
-    # hubEvals returns this as a `count` column; we carry it as `n_<output_type>`
-    # below and merge it back in get_and_save_scores(). See #19.
-    include_count = TRUE
+    by = by,
+    transform = transform,
+    task_groups_w_target = task_groups_w_target
   )
-  # Ordinal pmf with a metric that requires ordinal dispatch (e.g. rps): pass
-  # the ordered level vector so scoringutils dispatches as forecast_ordinal
-  # rather than forecast_nominal. log_score works under either dispatch with
-  # identical results, so we skip the lookup when only log_score is requested.
-  if (
-    output_type == "pmf" &&
-      is_target_ordinal(task_groups_w_target) &&
-      any(metrics %in% ordinal_only_pmf_metrics()) # nolint: object_usage
-  ) {
-    score_args$output_type_id_order <- get_output_type_ids_for_type(
-      task_groups_w_target,
-      "pmf"
+  metrics <- score_args$metrics
+  relative_metrics <- score_args$relative_metrics
+  score_by <- score_args$by
+  apply_transform <- !is.null(score_args$transform)
+  transform_append <- isTRUE(score_args$transform_append)
+  transform_label <- score_args$transform_label
+
+  if (is.null(row_scores)) {
+    score_args$model_out_tbl <- model_out_tbl |>
+      dplyr::filter(.data[["output_type"]] == !!output_type)
+    score_args$oracle_output <- oracle_output
+    scores <- do.call(score_model_out, score_args)
+  } else {
+    scores <- summarize_model_out_scores(
+      row_scores,
+      relative_metrics = relative_metrics,
+      baseline = baseline,
+      by = score_by,
+      include_count = score_args$include_count
     )
   }
-  if (apply_transform) {
-    score_args$transform <- get_transform_function(transform$fun)
-    score_args$transform_append <- transform_append
-    score_args$transform_label <- transform_label
-    score_args <- c(score_args, transform$args)
-  }
-  scores <- do.call(score_model_out, score_args)
 
   # Set the scored-forecast count aside as `n_<output_type>` before the metric
   # columns are reshaped below, then re-attach it as the final column so it ends
@@ -372,6 +556,75 @@ get_scores_for_output_type <- function(
   }
 
   dplyr::left_join(scores, counts, by = group_cols)
+}
+
+
+#' Arguments to `score_model_out()` for one output type, other than
+#' `model_out_tbl` and `oracle_output`
+#'
+#' Used both to score an eval set and to score forecasts once before
+#' summarizing, so the two are scored the same way.
+#' @noRd
+get_score_args <- function(
+  output_type,
+  metric_name_to_output_type,
+  relative_metrics,
+  baseline,
+  by,
+  transform,
+  task_groups_w_target
+) {
+  metrics <- metric_name_to_output_type$metric[
+    metric_name_to_output_type$output_type == output_type
+  ]
+  if (!is.null(relative_metrics)) {
+    relative_metrics <- relative_metrics[relative_metrics %in% metrics]
+  }
+
+  apply_transform <- !is.null(transform) &&
+    output_type %in% get_transformable_output_types()
+  transform_append <- apply_transform && isTRUE(transform$append %||% TRUE)
+  transform_label <- if (apply_transform) get_transform_label(transform)
+  # When `append = TRUE`, scoringutils emits both natural- and transformed-scale
+  # rows keyed by a `scale` column. We must include `"scale"` in `by` so
+  # hubEvals' summarise step (which averages everything not in `by`) doesn't
+  # collapse the two scales together. We then pivot that long format to wide.
+  # With `append = FALSE`, only transformed rows are produced and no `scale`
+  # column is emitted, so there's nothing to keep separated.
+  score_by <- c("model_id", by, if (transform_append) "scale")
+  score_args <- list(
+    metrics = metrics,
+    relative_metrics = relative_metrics,
+    baseline = baseline,
+    by = score_by,
+    # Count the forecasts actually scored per group (after the oracle join drops
+    # units with no observation), rather than counting submitted predictions.
+    # hubEvals returns this as a `count` column; we carry it as `n_<output_type>`
+    # in get_scores_for_output_type() and merge it back in get_and_save_scores().
+    # See #19.
+    include_count = TRUE
+  )
+  # Ordinal pmf with a metric that requires ordinal dispatch (e.g. rps): pass
+  # the ordered level vector so scoringutils dispatches as forecast_ordinal
+  # rather than forecast_nominal. log_score works under either dispatch with
+  # identical results, so we skip the lookup when only log_score is requested.
+  if (
+    output_type == "pmf" &&
+      is_target_ordinal(task_groups_w_target) &&
+      any(metrics %in% ordinal_only_pmf_metrics()) # nolint: object_usage
+  ) {
+    score_args$output_type_id_order <- get_output_type_ids_for_type(
+      task_groups_w_target,
+      "pmf"
+    )
+  }
+  if (apply_transform) {
+    score_args$transform <- get_transform_function(transform$fun)
+    score_args$transform_append <- transform_append
+    score_args$transform_label <- transform_label
+    score_args <- c(score_args, transform$args)
+  }
+  score_args
 }
 
 
