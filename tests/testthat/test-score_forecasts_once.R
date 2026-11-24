@@ -292,6 +292,60 @@ test_that("an eval set with nothing to score behaves as when scoring each eval s
   expect_identical(outcomes$once, outcomes$per_eval_set)
   # this is the case that falls back to scoring the eval set directly
   expect_gt(outcomes$rescored, 0)
+
+  # the same, when another eval set's forecasts were scored
+  config$eval_sets <- c(
+    list(list(
+      eval_set_name = "Full season",
+      round_filters = list(min = "2022-10-22")
+    )),
+    config$eval_sets
+  )
+  outcomes <- run_both(hub_path, write_config(config))
+  expect_match(outcomes$per_eval_set$error, "no forecasts")
+  expect_identical(outcomes$once, outcomes$per_eval_set)
+  expect_gt(outcomes$rescored, 0)
+})
+
+
+test_that("a target with no forecasts in any eval set writes nothing, as before", {
+  config <- yaml::read_yaml(test_path(
+    "testdata",
+    "test_configs",
+    "config_valid_set_filters_no_data.yaml"
+  ))
+  # keep only the eval set for locations with no data in the test hub
+  config$eval_sets <- config$eval_sets[3]
+  outcomes <- run_both(test_path("testdata", "ecfh"), write_config(config))
+  expect_same_scores(outcomes, "no forecasts")
+  expect_length(outcomes$once$files, 0)
+})
+
+
+test_that("scores match when a model doesn't submit every output type", {
+  hub_path <- withr::local_tempdir()
+  src <- test_path("testdata", "ecfh")
+  file.copy(
+    list.files(src, full.names = TRUE, all.files = TRUE, no.. = TRUE),
+    hub_path,
+    recursive = TRUE
+  )
+  # MOBS-GLEAM submits no medians
+  model_dir <- file.path(hub_path, "model-output", "MOBS-GLEAM")
+  for (path in list.files(model_dir, full.names = TRUE)) {
+    lines <- readLines(path)
+    writeLines(lines[!grepl(',"median",', lines, fixed = TRUE)], path)
+  }
+  config <- yaml::read_yaml(test_path(
+    "testdata",
+    "test_configs",
+    "config_valid_mean_median_quantile_rel.yaml"
+  ))
+  config$eval_sets <- config$eval_sets[1]
+  outcomes <- run_both(hub_path, write_config(config))
+  expect_same_scores(outcomes, "model without medians")
+  scores <- outcomes$once$files[["wk inc flu hosp/Full season/scores.csv"]]
+  expect_true(is.na(scores$ae_point[scores$model_id == "MOBS-GLEAM"]))
 })
 
 
