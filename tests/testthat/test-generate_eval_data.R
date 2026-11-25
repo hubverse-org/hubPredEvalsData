@@ -664,11 +664,11 @@ test_that("a (model, by) cell present only on a non-anchor output type survives 
 
 
 test_that("scores.csv row order is deterministic regardless of input row order (#25)", {
-  # arrow's parallel collect returns model output rows in a
-  # nondeterministic order and hubEvals::score_model_out() carries that order
-  # into its output, so two runs on identical data used to emit the same rows
-  # shuffled. get_and_save_scores() now arranges on the (model_id, by) key
-  # before writing. Feeding deliberately reverse-ordered input must still yield
+  # arrow's parallel collect returns model output rows in a nondeterministic
+  # order and hubEvals::score_model_out() carries that order into its output,
+  # so two runs on identical data used to emit the same rows shuffled.
+  # get_and_save_scores() now arranges on the (model_id, by) key before
+  # writing. Feeding deliberately reverse-ordered input must still yield
   # output in that canonical order, for both the overall (key model_id only)
   # and disaggregated (key model_id + by) paths.
   hub_path <- test_path("testdata", "ecfh")

@@ -210,9 +210,9 @@ get_forecast_keys <- function(model_out_tbl) {
 #'
 #' Model output is loaded and scored one model at a time, and only for the
 #' rounds in that model's keys, which keeps memory use to roughly one model's
-#' forecasts. Per-forecast scores don't depend on
-#' which other forecasts are scored alongside them, so this gives the same
-#' scores as scoring each eval set as a whole.
+#' forecasts. Per-forecast scores don't depend on which other forecasts are
+#' scored alongside them, so this gives the same scores as scoring each eval
+#' set as a whole.
 #'
 #' @param target_model_out This target's model output, as a lazy query on a
 #'   hub connection or a data frame.
