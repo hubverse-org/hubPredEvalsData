@@ -159,9 +159,10 @@ generate_target_eval_data <- function(
     set_row_scores <- get_row_scores_in_eval_set(row_scores, forecasts)
     model_out_tbl <- NULL
     if (is.null(set_row_scores)) {
-      # Some output type has forecasts in this eval set but nothing to score
-      # (for example, no oracle values yet). Score the eval set directly, as
-      # before, so this case behaves exactly as it did.
+      # Some output type the target's metrics use has no row scores in this
+      # eval set: it has no model output of that type, or none of it could be
+      # scored (for example, no oracle values yet). Score the eval set
+      # directly, so that score_model_out() raises its own error for it.
       model_out_tbl <- load_model_out_in_eval_set(
         hub_path,
         target_id,
