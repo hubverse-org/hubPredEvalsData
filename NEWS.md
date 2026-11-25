@@ -1,5 +1,9 @@
 # hubPredEvalsData (development version)
 
+## Performance
+
+* `generate_eval_data()` scores each forecast once per target, then summarizes those scores for every evaluation set and disaggregation. Before, each forecast was scored again for every disaggregation and every evaluation set it was in. Model output is scored one model at a time, so peak memory no longer grows with the size of the largest evaluation set. Scores are unchanged up to floating point rounding, and `scores.csv` row order and values are now the same on every run (#80, #83). This needs hubEvals 0.6.0 or later.
+
 # hubPredEvalsData 1.3.0
 
 ## Bug Fixes
