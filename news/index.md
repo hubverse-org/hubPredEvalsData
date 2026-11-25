@@ -1,5 +1,21 @@
 # Changelog
 
+## hubPredEvalsData 1.4.0
+
+### Performance
+
+- [`generate_eval_data()`](https://hubverse-org.github.io/hubPredEvalsData/reference/generate_eval_data.md)
+  scores each forecast once per target, then summarizes those scores for
+  every evaluation set and disaggregation. Before, each forecast was
+  scored again for every disaggregation and every evaluation set it was
+  in. Model output is scored one model at a time, so peak memory no
+  longer grows with the size of the largest evaluation set. Scores are
+  unchanged up to floating point rounding, and `scores.csv` row order
+  and values are now the same on every run
+  ([\#80](https://github.com/hubverse-org/hubPredEvalsData/issues/80),
+  [\#83](https://github.com/hubverse-org/hubPredEvalsData/issues/83)).
+  This needs hubEvals 0.6.0 or later.
+
 ## hubPredEvalsData 1.3.0
 
 ### Bug Fixes
@@ -21,11 +37,17 @@
 
 ### Performance
 
-- Evaluation data generation is faster. The hub connection is opened
-  once and reused across targets and evaluation sets rather than
-  reopened for every combination, and oracle output is subset to the
-  target before scoring
-  ([\#82](https://github.com/hubverse-org/hubPredEvalsData/issues/82)).
+- Evaluation data generation is substantially faster and uses less
+  memory.
+  - Relative skill no longer dominates the run. hubEvals 0.5.0 and
+    scoringutils 2.3.0 are now required, and in the FluSight benchmark
+    wall-clock time fell from 569 s to 240 s and peak memory from 6.85
+    GB to 5.1 GB
+    ([\#93](https://github.com/hubverse-org/hubPredEvalsData/issues/93)).
+  - The hub connection is opened once and reused across targets and
+    evaluation sets rather than reopened for every combination, and
+    oracle output is subset to the target before scoring
+    ([\#82](https://github.com/hubverse-org/hubPredEvalsData/issues/82)).
 
 ## hubPredEvalsData 1.2.0
 
