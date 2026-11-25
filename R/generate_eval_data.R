@@ -93,11 +93,12 @@ generate_target_eval_data <- function(
   eval_sets <- config$eval_sets
   transform <- resolve_target_transform(target, config$transform_defaults)
 
-  task_groups_w_target <- get_task_groups_w_target(
-    hub_path,
-    target_id,
+  hub_tasks_config <- hubUtils::read_config(hub_path, config = "tasks")
+  task_groups_w_target <- get_model_tasks(
+    hub_tasks_config,
     config$rounds_idx
-  )
+  ) |>
+    filter_task_groups_to_target(target_id)
   metric_name_to_output_type <- get_metric_name_to_output_type(
     task_groups_w_target,
     metrics
@@ -111,18 +112,32 @@ generate_target_eval_data <- function(
   # Per-forecast scores don't depend on the eval set or the disaggregation, so
   # each forecast is scored once and its scores are then summarized for every
   # eval set and `by` it appears in. See #80 and #83.
+  #
+  # A forecast key is a model output row without its `output_type_id` and
+  # `value` columns. Rows that differ only in those two columns share a key.
+  # For example, a model's 23 quantile rows for one location, horizon and
+  # reference date share one key.
+  #
+  # The steps:
+  # 1. Read the forecast keys of all of the target's model output, once.
+  # 2. Filter those keys to each eval set.
+  # 3. Score the model output rows that match any eval set's keys.
+  # 4. For each eval set, summarize the scores that match its keys.
+  #
+  # Keys are read once because arrow parses CSV model output in full on every
+  # read, so reading keys per eval set would parse the hub once per eval set.
+  round_id_col <- hub_tasks_config$rounds[[config$rounds_idx + 1]]$round_id
+  target_model_out <- filter_to_target(hub_con, task_groups_w_target)
+  target_keys <- target_model_out |>
+    get_forecast_keys() |>
+    dplyr::collect()
+  round_ids <- hubUtils::get_round_ids(hub_tasks_config)
   eval_set_forecasts <- purrr::map(eval_sets, function(eval_set) {
-    load_model_out_in_eval_set(
-      hub_path,
-      target_id,
-      eval_set,
-      config$rounds_idx,
-      hub_con = hub_con
-    ) |>
-      get_forecast_keys()
+    filter_to_eval_set(target_keys, eval_set, round_id_col, round_ids)
   })
   row_scores <- score_forecasts_once(
-    hub_con = hub_con,
+    target_model_out = target_model_out,
+    round_id_col = round_id_col,
     forecast_keys = eval_set_forecasts,
     oracle_output = oracle_output,
     metric_name_to_output_type = metric_name_to_output_type,
@@ -144,9 +159,10 @@ generate_target_eval_data <- function(
     set_row_scores <- get_row_scores_in_eval_set(row_scores, forecasts)
     model_out_tbl <- NULL
     if (is.null(set_row_scores)) {
-      # Some output type has forecasts in this eval set but nothing to score
-      # (for example, no oracle values yet). Score the eval set directly, as
-      # before, so this case behaves exactly as it did.
+      # Some output type the target's metrics use has no row scores in this
+      # eval set: it has no model output of that type, or none of it could be
+      # scored (for example, no oracle values yet). Score the eval set
+      # directly, so that score_model_out() raises its own error for it.
       model_out_tbl <- load_model_out_in_eval_set(
         hub_path,
         target_id,
@@ -177,9 +193,11 @@ generate_target_eval_data <- function(
 }
 
 
-#' The forecasts in a model output table: its distinct rows without the
-#' `output_type_id` and `value` columns, i.e. one row per model, task and
-#' output type.
+#' Get the forecast keys of a model output table
+#'
+#' The distinct rows of `model_out_tbl` without the `output_type_id` and
+#' `value` columns: one row per model, combination of task ID values and output
+#' type.
 #' @noRd
 get_forecast_keys <- function(model_out_tbl) {
   model_out_tbl |>
@@ -190,11 +208,16 @@ get_forecast_keys <- function(model_out_tbl) {
 
 #' Score every forecast that is in at least one eval set, once
 #'
-#' Model output is loaded and scored one model at a time, which keeps memory
-#' use to roughly one model's forecasts. Per-forecast scores don't depend on
-#' which other forecasts are scored alongside them, so this gives the same
-#' scores as scoring each eval set as a whole.
+#' Model output is loaded and scored one model at a time, and only for the
+#' rounds in that model's keys, which keeps memory use to roughly one model's
+#' forecasts. Per-forecast scores don't depend on which other forecasts are
+#' scored alongside them, so this gives the same scores as scoring each eval
+#' set as a whole.
 #'
+#' @param target_model_out This target's model output, as a lazy query on a
+#'   hub connection or a data frame.
+#' @param round_id_col The round ID column: the `round_id` of the `rounds`
+#'   entry that `rounds_idx` selects.
 #' @param forecast_keys A list of forecast key tables (see
 #'   `get_forecast_keys()`), one per eval set.
 #' @return A named list with one element per output type: the per-forecast
@@ -202,7 +225,8 @@ get_forecast_keys <- function(model_out_tbl) {
 #'   `NULL` if there was nothing to score.
 #' @noRd
 score_forecasts_once <- function(
-  hub_con,
+  target_model_out,
+  round_id_col,
   forecast_keys,
   oracle_output,
   metric_name_to_output_type,
@@ -219,11 +243,14 @@ score_forecasts_once <- function(
     return(row_scores)
   }
 
-  target_con <- filter_to_target(hub_con, task_groups_w_target)
   for (model in sort(unique(all_keys$model_id))) {
     model_keys <- all_keys[all_keys$model_id == model, , drop = FALSE]
-    model_out_tbl <- target_con |>
-      dplyr::filter(.data[["model_id"]] == !!model) |>
+    model_rounds <- unique(model_keys[[round_id_col]])
+    model_out_tbl <- target_model_out |>
+      dplyr::filter(
+        .data[["model_id"]] == !!model,
+        .data[[round_id_col]] %in% !!model_rounds
+      ) |>
       dplyr::collect() |>
       dplyr::semi_join(model_keys, by = names(model_keys))
 
@@ -399,8 +426,8 @@ get_and_save_scores <- function(
 
   group_cols <- c("model_id", by)
 
-  # The row order coming out of scoring reflects arrow's parallel, scan-order
-  # collect in load_model_out_in_eval_set(), so two runs on identical data emit
+  # The row order coming out of scoring reflects the order in which arrow's
+  # parallel collect returns model output, so two runs on identical data emit
   # the same rows shuffled. Sort on the (model_id, by) key, which is unique per
   # row, so scores.csv is byte-stable across runs and diffable. See #25.
   scores <- dplyr::arrange(scores, dplyr::across(dplyr::all_of(group_cols)))
