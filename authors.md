@@ -12,7 +12,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/hubverse-org/hubPredEvalsData/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/hubverse-org/hubPredEvalsData/blob/v1.4.0/DESCRIPTION)
 
 Ray E, Krystalli A (2026). *hubPredEvalsData: Data Creation for Hub
 Prediction Evaluations via predevals*. R package version 1.4.0,
