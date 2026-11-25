@@ -10,7 +10,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">hubPredEvalsData</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,8 +36,11 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="hubpredevalsdata-development-version">hubPredEvalsData (development version)<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.4.0" id="hubpredevalsdata-140">hubPredEvalsData 1.4.0<a class="anchor" aria-label="anchor" href="#hubpredevalsdata-140"></a></h2>
 <div class="section level3">
-<h3 id="performance-development-version">Performance<a class="anchor" aria-label="anchor" href="#performance-development-version"></a></h3>
+<h3 id="performance-1-4-0">Performance<a class="anchor" aria-label="anchor" href="#performance-1-4-0"></a></h3>
 <ul><li>
 <code><a href="../reference/generate_eval_data.html">generate_eval_data()</a></code> scores each forecast once per target, then summarizes those scores for every evaluation set and disaggregation. Before, each forecast was scored again for every disaggregation and every evaluation set it was in. Model output is scored one model at a time, so peak memory no longer grows with the size of the largest evaluation set. Scores are unchanged up to floating point rounding, and <code>scores.csv</code> row order and values are now the same on every run (<a href="https://github.com/hubverse-org/hubPredEvalsData/issues/80" class="external-link">#80</a>, <a href="https://github.com/hubverse-org/hubPredEvalsData/issues/83" class="external-link">#83</a>). This needs hubEvals 0.6.0 or later.</li>
 </ul></div>

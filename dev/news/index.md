@@ -2,6 +2,8 @@
 
 ## hubPredEvalsData (development version)
 
+## hubPredEvalsData 1.4.0
+
 ### Performance
 
 - [`generate_eval_data()`](https://hubverse-org.github.io/hubPredEvalsData/dev/reference/generate_eval_data.md)
