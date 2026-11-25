@@ -664,7 +664,7 @@ test_that("a (model, by) cell present only on a non-anchor output type survives 
 
 
 test_that("scores.csv row order is deterministic regardless of input row order (#25)", {
-  # arrow's parallel collect in load_model_out_in_eval_set() returns rows in a
+  # arrow's parallel collect returns model output rows in a
   # nondeterministic order and hubEvals::score_model_out() carries that order
   # into its output, so two runs on identical data used to emit the same rows
   # shuffled. get_and_save_scores() now arranges on the (model_id, by) key
